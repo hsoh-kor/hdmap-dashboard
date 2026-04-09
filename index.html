@@ -1115,7 +1115,7 @@
         }
     }
 
-    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직 (데이터 다이어트 적용)
+    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직 (순서 버그 수정)
     async function sendChatMessage() {
         const inputField = document.getElementById('chatInput');
         const messageText = inputField.value.trim();
@@ -1124,7 +1124,7 @@
         const chatMessages = document.getElementById('chatMessages');
         const typingIndicator = document.getElementById('typingIndicator');
 
-        // 1. 사용자 메시지 화면에 추가
+        // 1. 사용자 메시지 화면에 추가 (로딩 글씨 바로 위에 삽입)
         const userMsgDiv = document.createElement('div');
         userMsgDiv.className = 'chat-message user';
         userMsgDiv.textContent = messageText;
@@ -1138,7 +1138,7 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            // 🌟 [핵심 해결 포인트] 무거운 차트 이미지 데이터는 빼고, 수치 데이터만 가볍게 포장합니다!
+            // 무거운 차트 이미지 데이터는 빼고, 수치 데이터만 가볍게 포장
             const chatContextData = {
                 totalLen: currentReportData.totalLen,
                 compLen: currentReportData.compLen,
@@ -1157,7 +1157,7 @@
                 },
                 body: JSON.stringify({
                     question: messageText,
-                    contextData: chatContextData // 가벼워진 데이터만 전송
+                    contextData: chatContextData
                 })
             });
 
@@ -1165,16 +1165,18 @@
             typingIndicator.style.display = 'none';
 
             if (response.ok && data.reply) {
-                // 4. AI 응답 화면에 추가 (마크다운 굵은 글씨와 줄바꿈 처리)
+                // 4. AI 응답 화면에 추가
                 const botMsgDiv = document.createElement('div');
                 botMsgDiv.className = 'chat-message bot';
                 
                 let formattedReply = data.reply
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **글씨** 를 굵게 처리
-                    .replace(/\n/g, '<br>'); // 엔터를 줄바꿈으로 처리
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // 굵은 글씨 처리
+                    .replace(/\n/g, '<br>'); // 줄바꿈 처리
                 
                 botMsgDiv.innerHTML = formattedReply;
-                chatMessages.appendChild(botMsgDiv);
+                
+                // 🌟 [핵심 수정] 답변도 로딩 글씨 '위쪽'에 순서대로 쌓이도록 수정!
+                chatMessages.insertBefore(botMsgDiv, typingIndicator);
             } else {
                 throw new Error(data.error || '응답을 받지 못했습니다.');
             }
@@ -1187,9 +1189,11 @@
             const errorMsgDiv = document.createElement('div');
             errorMsgDiv.className = 'chat-message bot';
             errorMsgDiv.style.color = '#e74c3c';
-            // 🌟 이 부분이 핵심입니다! 숨겨진 진짜 에러 메시지를 화면에 찍어줍니다.
             errorMsgDiv.innerHTML = `<b>🚨 서버 에러 보고:</b><br>${error.message}`;
-            chatMessages.appendChild(errorMsgDiv);
+            
+            // 🌟 [핵심 수정] 에러 메시지도 로딩 글씨 '위쪽'에 쌓이도록 수정!
+            chatMessages.insertBefore(errorMsgDiv, typingIndicator);
+            
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
