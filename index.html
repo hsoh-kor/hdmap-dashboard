@@ -1115,7 +1115,7 @@
         }
     }
 
-    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직
+    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직 (데이터 다이어트 적용)
     async function sendChatMessage() {
         const inputField = document.getElementById('chatInput');
         const messageText = inputField.value.trim();
@@ -1138,7 +1138,18 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            // 3. Vercel에 만들어둔 내 서버 API(/api/chat)로 데이터 전송
+            // 🌟 [핵심 해결 포인트] 무거운 차트 이미지 데이터는 빼고, 수치 데이터만 가볍게 포장합니다!
+            const chatContextData = {
+                totalLen: currentReportData.totalLen,
+                compLen: currentReportData.compLen,
+                progress: currentReportData.progress,
+                inspectCounts: currentReportData.inspectCounts,
+                processStats: currentReportData.processStats,
+                companyStats: currentReportData.companyStats,
+                companyProcessStats: currentReportData.companyProcessStats
+            };
+
+            // 3. Vercel 서버로 전송
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
@@ -1146,7 +1157,7 @@
                 },
                 body: JSON.stringify({
                     question: messageText,
-                    contextData: currentReportData // 현재 대시보드 상태를 몰래 같이 보냄
+                    contextData: chatContextData // 가벼워진 데이터만 전송
                 })
             });
 
@@ -1176,7 +1187,7 @@
             const errorMsgDiv = document.createElement('div');
             errorMsgDiv.className = 'chat-message bot';
             errorMsgDiv.style.color = '#e74c3c';
-            errorMsgDiv.innerHTML = "<b>서버 통신 오류:</b><br>AI 응답을 가져오지 못했습니다. Vercel API 설정이나 API 키를 다시 확인해주세요.";
+            errorMsgDiv.innerHTML = "<b>서버 통신 오류:</b><br>AI 응답을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
             chatMessages.appendChild(errorMsgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
