@@ -108,7 +108,7 @@
         .modal-table th { background-color: #f9f9f9; width: 110px; color: #555; }
         .modal-table td { color: #222; font-weight: 500; }
 
-        /* 🌟 [신규 추가] AI 챗봇 UI 스타일 */
+        /* 🌟 AI 챗봇 UI 스타일 */
         .chatbot-fab { position: fixed; bottom: 30px; right: 210px; width: 60px; height: 60px; background-color: #2c3e50; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; transition: transform 0.2s; }
         .chatbot-fab:hover { transform: scale(1.05); }
         
@@ -243,6 +243,8 @@
                 <h3>공정 현황 범례</h3>
                 <div class="legend-item"><div class="color-box" style="background: #32CD32;"></div>DB 구조화 완료</div>
                 <div class="legend-item"><div class="color-box" style="background: #FFD700;"></div>표준자료 완료</div>
+                <div class="legend-item"><div class="color-box" style="background: #9b59b6;"></div>기준점 완료</div>
+                <div class="legend-item"><div class="color-box" style="background: #3498db;"></div>MMS촬영 완료</div>
                 <div class="legend-item"><div class="color-box" style="background: #808080;"></div>진행 전</div>
             </div>
             <div id="legendInspect" style="display: none;">
@@ -312,7 +314,6 @@
     let rv, rvClient;
     let isRoadviewMode = false;
 
-    // 🌟 [수정됨] Chart.js v3 이상 버전용 배경색(흰색) 지정 플러그인
     const customCanvasBackgroundColor = {
         id: 'customCanvasBackgroundColor',
         beforeDraw: (chart, args, options) => {
@@ -630,6 +631,7 @@
         mapPolylines[sectionId].push(polyline);
     }
 
+    // 🌟 [최종 반영] 모달창 4단계 공정 표시 로직
     function openInfoModal(layerName, secNo, data) {
         document.getElementById('modalTitle').textContent = `${layerName} (${secNo})`;
         
@@ -637,8 +639,11 @@
         if (data) {
             let statusText = '진행 전';
             let statusColor = '#808080';
-            if (data.status === 2) { statusText = 'DB 구조화 완료'; statusColor = '#32CD32'; }
-            else if (data.status === 1) { statusText = '표준자료 완료'; statusColor = '#FFD700'; }
+            
+            if (data.status === 4) { statusText = 'DB 구조화 완료'; statusColor = '#32CD32'; }
+            else if (data.status === 3) { statusText = '표준자료 완료'; statusColor = '#FFD700'; }
+            else if (data.status === 2) { statusText = '기준점 완료'; statusColor = '#9b59b6'; }
+            else if (data.status === 1) { statusText = 'MMS촬영 완료'; statusColor = '#3498db'; }
 
             let inspectText = data.inspect || '미진행';
 
@@ -745,7 +750,8 @@
         let inspectCounts = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
         let companyStats = {};
         
-        let processStats = { '진행 전': 0, '표준자료 완료': 0, 'DB 구조화 완료': 0 };
+        // 🌟 [최종 반영] 통계 수치 4단계 공정 로직 업데이트
+        let processStats = { '진행 전': 0, 'MMS촬영 완료': 0, '기준점 완료': 0, '표준자료 완료': 0, 'DB 구조화 완료': 0 };
         let companyProcessStats = {};
 
         visibleSectionIds.forEach(id => {
@@ -754,7 +760,7 @@
 
             let len = parseFloat(item.length) || 0;
             totalLen += len;
-            if (item.status === 2) compLen += len;
+            if (item.status === 4) compLen += len;
 
             let ins = item.inspect || "";
             let comp = (item.dbCompany || "").trim(); 
@@ -765,9 +771,12 @@
             else if (ins.includes('검수의뢰')) statusKey = '검수의뢰';
             else if (ins.includes('반려')) statusKey = '반려';
             
+            // 🌟 [최종 반영]
             let processKey = '진행 전';
-            if (item.status === 2) processKey = 'DB 구조화 완료';
-            else if (item.status === 1) processKey = '표준자료 완료';
+            if (item.status === 4) processKey = 'DB 구조화 완료';
+            else if (item.status === 3) processKey = '표준자료 완료';
+            else if (item.status === 2) processKey = '기준점 완료';
+            else if (item.status === 1) processKey = 'MMS촬영 완료';
 
             let addValue = (currentChartMode === 'count') ? 1 : len;
 
@@ -778,7 +787,7 @@
                 if (!companyStats[comp]) companyStats[comp] = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
                 companyStats[comp][statusKey] += addValue;
                 
-                if (!companyProcessStats[comp]) companyProcessStats[comp] = { '진행 전': 0, '표준자료 완료': 0, 'DB 구조화 완료': 0 };
+                if (!companyProcessStats[comp]) companyProcessStats[comp] = { '진행 전': 0, 'MMS촬영 완료': 0, '기준점 완료': 0, '표준자료 완료': 0, 'DB 구조화 완료': 0 };
                 companyProcessStats[comp][processKey] += addValue;
             }
         });
@@ -999,6 +1008,7 @@
         buildDropdownFilter('inspectCheckboxes', 'inspectDropdownTitle', '검사 상태', inspects);
     }
 
+    // 🌟 [최종 반영] 선 색상 4단계 공정 로직 업데이트
     function applyFilterAndColors() {
         if(customOverlay) customOverlay.setMap(null);
         
@@ -1042,8 +1052,10 @@
                 }
                 
                 if (currentMapMode === 'process') { 
-                    if (sheetItem.status === 2) newColor = '#32CD32'; 
-                    else if (sheetItem.status === 1) newColor = '#FFD700'; 
+                    if (sheetItem.status === 4) newColor = '#32CD32'; 
+                    else if (sheetItem.status === 3) newColor = '#FFD700'; 
+                    else if (sheetItem.status === 2) newColor = '#9b59b6'; 
+                    else if (sheetItem.status === 1) newColor = '#3498db'; 
                 } 
                 else if (currentMapMode === 'inspect') {
                     let inspectVal = sheetItem.inspect || "";
@@ -1106,7 +1118,6 @@
         }
     }
 
-    // 🌟 [신규 추가] AI 챗봇 관련 자바스크립트 로직
     function toggleChat() {
         const chatWindow = document.getElementById('chatWindow');
         chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
@@ -1115,7 +1126,7 @@
         }
     }
 
-    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직 (순서 버그 수정)
+    // 🌟 [최종 완성] 챗봇 순서 버그 수정 및 데이터 다이어트
     async function sendChatMessage() {
         const inputField = document.getElementById('chatInput');
         const messageText = inputField.value.trim();
@@ -1175,7 +1186,7 @@
                 
                 botMsgDiv.innerHTML = formattedReply;
                 
-                // 🌟 [핵심 수정] 답변도 로딩 글씨 '위쪽'에 순서대로 쌓이도록 수정!
+                // 답변도 로딩 글씨 '위쪽'에 순서대로 쌓이도록 삽입
                 chatMessages.insertBefore(botMsgDiv, typingIndicator);
             } else {
                 throw new Error(data.error || '응답을 받지 못했습니다.');
@@ -1191,7 +1202,7 @@
             errorMsgDiv.style.color = '#e74c3c';
             errorMsgDiv.innerHTML = `<b>🚨 서버 에러 보고:</b><br>${error.message}`;
             
-            // 🌟 [핵심 수정] 에러 메시지도 로딩 글씨 '위쪽'에 쌓이도록 수정!
+            // 에러 메시지도 로딩 글씨 '위쪽'에 쌓이도록 삽입
             chatMessages.insertBefore(errorMsgDiv, typingIndicator);
             
             chatMessages.scrollTop = chatMessages.scrollHeight;
