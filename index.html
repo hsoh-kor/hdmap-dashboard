@@ -1115,6 +1115,7 @@
         }
     }
 
+    // 🌟 [최종 완성] Vercel 백엔드(Gemini API)와 통신하는 챗봇 로직
     async function sendChatMessage() {
         const inputField = document.getElementById('chatInput');
         const messageText = inputField.value.trim();
@@ -1130,27 +1131,43 @@
         chatMessages.insertBefore(userMsgDiv, typingIndicator);
         
         inputField.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight; // 스크롤 맨 아래로
+        chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // 2. 로딩 표시 켜기
+        // 2. 로딩 표시 켜기 (AI 생각 중...)
         typingIndicator.style.display = 'block';
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            // 🌟 나중에 Vercel 백엔드가 완성되면 이곳에서 실제 fetch() 통신을 합니다.
-            // 지금은 화면에 현재 데이터를 JSON 형태로 잘 가져오는지 콘솔에만 찍어보겠습니다.
-            console.log("AI에게 보낼 질문:", messageText);
-            console.log("AI에게 함께 보낼 현재 대시보드 상태(Context):", currentReportData);
+            // 3. Vercel에 만들어둔 내 서버 API(/api/chat)로 데이터 전송
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question: messageText,
+                    contextData: currentReportData // 현재 대시보드 상태를 몰래 같이 보냄
+                })
+            });
 
-            // 가짜 딜레이 (실제 통신하는 척)
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // 3. AI 응답 화면에 추가 (지금은 임시 텍스트)
+            const data = await response.json();
             typingIndicator.style.display = 'none';
-            const botMsgDiv = document.createElement('div');
-            botMsgDiv.className = 'chat-message bot';
-            botMsgDiv.innerHTML = `이 답변은 임시 응답입니다.<br>질문하신 <b>"${messageText}"</b>에 대한 처리를 위해 Vercel 백엔드 연결이 필요합니다.`;
-            chatMessages.appendChild(botMsgDiv);
+
+            if (response.ok && data.reply) {
+                // 4. AI 응답 화면에 추가 (마크다운 굵은 글씨와 줄바꿈 처리)
+                const botMsgDiv = document.createElement('div');
+                botMsgDiv.className = 'chat-message bot';
+                
+                let formattedReply = data.reply
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **글씨** 를 굵게 처리
+                    .replace(/\n/g, '<br>'); // 엔터를 줄바꿈으로 처리
+                
+                botMsgDiv.innerHTML = formattedReply;
+                chatMessages.appendChild(botMsgDiv);
+            } else {
+                throw new Error(data.error || '응답을 받지 못했습니다.');
+            }
+
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
         } catch (error) {
@@ -1159,8 +1176,9 @@
             const errorMsgDiv = document.createElement('div');
             errorMsgDiv.className = 'chat-message bot';
             errorMsgDiv.style.color = '#e74c3c';
-            errorMsgDiv.textContent = "서버 통신 중 오류가 발생했습니다.";
+            errorMsgDiv.innerHTML = "<b>서버 통신 오류:</b><br>AI 응답을 가져오지 못했습니다. Vercel API 설정이나 API 키를 다시 확인해주세요.";
             chatMessages.appendChild(errorMsgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
 </script>
