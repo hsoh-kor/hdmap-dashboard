@@ -1187,7 +1187,8 @@
             const errorMsgDiv = document.createElement('div');
             errorMsgDiv.className = 'chat-message bot';
             errorMsgDiv.style.color = '#e74c3c';
-            errorMsgDiv.innerHTML = "<b>서버 통신 오류:</b><br>AI 응답을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+            // 🌟 이 부분이 핵심입니다! 숨겨진 진짜 에러 메시지를 화면에 찍어줍니다.
+            errorMsgDiv.innerHTML = `<b>🚨 서버 에러 보고:</b><br>${error.message}`;
             chatMessages.appendChild(errorMsgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
