@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Gemini API 호출 URL 구성 (gemini-1.5-flash 모델 사용 권장)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     // 3. Gemini에게 전달할 프롬프트 구성 (역할 부여 + 문맥 데이터 + 사용자 질문)
     const promptText = `
