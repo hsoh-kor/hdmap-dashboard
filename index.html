@@ -196,10 +196,12 @@
             </div>
 
             <div class="filter-section">
-                <label class="section-title">🎯 다중 조건 필터</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label class="section-title" style="margin-bottom: 0;">🎯 다중 조건 필터</label>
+                    <button id="resetFiltersBtn" style="padding: 4px 10px; font-size: 11px; background: #f8f9fa; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.background='#e2e6ea'" onmouseout="this.style.background='#f8f9fa'">🔄 초기화</button>
+                </div>
                 
                 <div class="custom-select-container" id="companyDropdownContainer">
-                    <div class="custom-select-header" id="companyDropdownHeader">
                         <span id="companyDropdownTitle">DB 담당 업체: 전체</span>
                         <span class="arrow-icon">▼</span>
                     </div>
@@ -1218,6 +1220,28 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
+    // 🌟 [추가] 초기화(Reset) 버튼 클릭 이벤트 로직
+    document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+        // 1. 드롭다운 필터(업체, 상태, 날짜) 모두 '전체 보기(체크)' 상태로 복구
+        document.querySelectorAll('.check-all-btn, .filter-checkbox').forEach(cb => cb.checked = true);
+        
+        // 2. 노선/섹션 검색창 텍스트 지우기 및 검색 결과 초기화
+        const searchInput = document.getElementById('routeSearchInput');
+        if(searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input')); // 빈칸으로 검색 실행시켜서 목록 원래대로 돌림
+        }
+        
+        // 3. 노선/섹션 개별 체크박스 모두 '해제' 상태로 복구 (해제 상태가 전체 표시임)
+        document.querySelectorAll('.route-checkbox, .section-checkbox').forEach(cb => cb.checked = false);
+        
+        // 4. 변경된 필터값을 기준으로 지도 선 색깔 및 통계 데이터(차트 등) 싹 다 새로고침
+        const visibleIds = applyFilterAndColors();
+        
+        // 5. 지도를 전체 범위로 줌 아웃해서 한눈에 보이게 촥! 펼치기
+        zoomToVisibleSections(visibleIds);
+    });
 </script>
 </body>
 </html>
+
