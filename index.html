@@ -655,6 +655,15 @@
         return (size / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function normalizeExternalUrl(url) {
+        const raw = String(url || '').trim();
+        if (!raw) return '';
+
+        // 사용자가 drive.google.com 처럼 프로토콜 없이 입력해도 정상 링크로 보정합니다.
+        if (/^https?:\/\//i.test(raw)) return raw;
+        return 'https://' + raw;
+    }
+
     function sanitizeFileName(name) {
         return String(name || 'file')
             .replace(/[\\/:*?"<>|#%{}^~[\]`]/g, '_')
@@ -758,54 +767,70 @@
                 console.error(error);
                 alert("공지사항 등록에 실패했습니다. Firestore 규칙과 로그인 상태를 확인하세요.\n" + error.message);
             }
-        } else {
-            const name = document.getElementById('resourceName').value.trim();
-            const link = extLink.value.trim();
-            const file = pendingResourceFile || fi.files[0];
+            return;
+        }
 
-            if (!name || (!link && !file)) {
-                return alert("자료 명칭과 파일 또는 구글드라이브 링크를 입력하세요.");
-            }
+        const name = document.getElementById('resourceName').value.trim();
+        const rawLink = extLink.value.trim();
+        const link = normalizeExternalUrl(rawLink);
+        const file = pendingResourceFile || fi.files[0];
 
-            try {
-                if (link) {
-                    await fb.addDoc(fb.collection(fb.db, 'resources'), {
-                        name,
-                        externalLink: link,
-                        fileName: '구글드라이브 링크',
-                        fileType: 'external-link',
-                        fileSize: 0,
-                        storagePath: '',
-                        createdAt: fb.serverTimestamp(),
-                        createdByUid: currentUser.uid,
-                        createdByName: currentUser.displayName || currentUser.email || '사용자',
-                        createdByEmail: currentUser.email || ''
-                    });
-                } else {
-                    const safeName = sanitizeFileName(file.name);
-                    const storagePath = `resources/${Date.now()}_${safeName}`;
-                    const fileRef = fb.ref(fb.storage, storagePath);
-                    await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
-                    const fileUrl = await fb.getDownloadURL(fileRef);
+        if (!name) return alert("자료 명칭을 입력하세요.");
+        if (!link && !file) return alert("파일을 선택하거나 구글드라이브 링크를 입력하세요.");
 
-                    await fb.addDoc(fb.collection(fb.db, 'resources'), {
-                        name,
-                        fileName: file.name,
-                        fileUrl,
-                        fileType: file.type || '',
-                        fileSize: file.size,
-                        storagePath,
-                        createdAt: fb.serverTimestamp(),
-                        createdByUid: currentUser.uid,
-                        createdByName: currentUser.displayName || currentUser.email || '사용자',
-                        createdByEmail: currentUser.email || ''
-                    });
-                }
+        // 링크와 파일이 동시에 있는 경우에는 링크를 우선 등록합니다.
+        try {
+            if (link) {
+                await fb.addDoc(fb.collection(fb.db, 'resources'), {
+                    name,
+                    resourceType: 'drive-link',
+                    externalLink: link,
+                    fileUrl: link,
+                    fileName: '구글드라이브 링크',
+                    fileType: 'external-link',
+                    fileSize: 0,
+                    storagePath: '',
+                    createdAt: fb.serverTimestamp(),
+                    createdByUid: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email || '사용자',
+                    createdByEmail: currentUser.email || ''
+                });
+
                 cancelResource();
-            } catch (error) {
-                console.error(error);
-                alert("자료 등록에 실패했습니다. Firestore/Storage 규칙과 로그인 상태를 확인하세요.\n" + error.message);
+                alert("구글드라이브 링크 자료가 등록되었습니다.");
+                return;
             }
+
+            const maxSize = 200 * 1024 * 1024;
+            if (file.size > maxSize) {
+                return alert("200MB 이하 파일만 직접 업로드할 수 있습니다. 200MB 초과 파일은 구글드라이브 링크로 등록해 주세요.");
+            }
+
+            const safeName = sanitizeFileName(file.name);
+            const storagePath = `resources/${Date.now()}_${safeName}`;
+            const fileRef = fb.ref(fb.storage, storagePath);
+            await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
+            const fileUrl = await fb.getDownloadURL(fileRef);
+
+            await fb.addDoc(fb.collection(fb.db, 'resources'), {
+                name,
+                resourceType: 'storage-file',
+                fileName: file.name,
+                fileUrl,
+                fileType: file.type || '',
+                fileSize: file.size,
+                storagePath,
+                createdAt: fb.serverTimestamp(),
+                createdByUid: currentUser.uid,
+                createdByName: currentUser.displayName || currentUser.email || '사용자',
+                createdByEmail: currentUser.email || ''
+            });
+
+            cancelResource();
+            alert("파일 자료가 등록되었습니다.");
+        } catch (error) {
+            console.error(error);
+            alert("자료 등록에 실패했습니다. Firestore/Storage 규칙과 로그인 상태를 확인하세요.\n\n오류 내용: " + error.message);
         }
     }
 
@@ -865,11 +890,18 @@
             resourceList.innerHTML = '<li class="empty-list-message">등록된 자료가 없습니다.</li>';
         } else {
             resourceList.innerHTML = resources.map(r => {
-                const isExternal = !!r.externalLink;
-                const openUrl = isExternal ? r.externalLink : r.fileUrl;
+                const isExternal = !!r.externalLink || r.resourceType === 'drive-link' || r.fileType === 'external-link';
+                const openUrl = isExternal ? (r.externalLink || r.fileUrl || '') : (r.fileUrl || '');
                 const metaText = isExternal
                     ? `구글드라이브 링크 · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}`
                     : `${escapeHtml(r.fileName || '파일명 없음')} · ${formatFileSize(r.fileSize)} · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}`;
+
+                const actionHtml = openUrl
+                    ? `${isExternal 
+                        ? `<a href="${escapeHtml(openUrl)}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">구글드라이브 열기</a>`
+                        : `<a href="${escapeHtml(openUrl)}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">보기</a>
+                           <a href="${escapeHtml(openUrl)}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>`}`
+                    : `<span style="font-size:0.75rem; color:#e74c3c;">링크 없음</span>`;
 
                 return `
                     <li class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -877,9 +909,8 @@
                             <span style="display:block; font-weight:bold;">${escapeHtml(r.name)}</span>
                             <div class="resource-meta">${metaText}</div>
                         </div>
-                        <div style="display:flex; gap:8px; flex-shrink:0;">
-                            <a href="${openUrl}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">${isExternal ? '구글드라이브 열기' : '보기'}</a>
-                            ${isExternal ? '' : `<a href="${openUrl}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>`}
+                        <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
+                            ${actionHtml}
                             <button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>
                         </div>
                     </li>
@@ -888,34 +919,7 @@
         }
     }
 
-    function initFirebaseSharedLists() {
-        const fb = getFirebaseTools();
-        if (!fb) return;
-
-        fb.onAuthStateChanged(fb.auth, (user) => {
-            currentUser = user;
-            const info = document.getElementById('authUserInfo');
-            const loginBtn = document.getElementById('loginBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-
-            if (user) {
-                info.textContent = user.displayName || user.email || '로그인됨';
-                loginBtn.style.display = 'none';
-                logoutBtn.style.display = 'inline-block';
-            } else {
-                info.textContent = '로그인 필요';
-                loginBtn.style.display = 'inline-block';
-                logoutBtn.style.display = 'none';
-            }
-        });
-
-        if (unsubscribeNotices) unsubscribeNotices();
-        if (unsubscribeResources) unsubscribeResources();
-
-        const noticeQuery = fb.query(fb.collection(fb.db, 'notices'), fb.orderBy('createdAt', 'desc'));
-        unsubscribeNotices = fb.onSnapshot(noticeQuery, (snapshot) => {
-            notices = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-            renderLists();
+    renderLists();
         }, (error) => {
             console.error(error);
             document.getElementById('noticeList').innerHTML = '<li class="empty-list-message" style="color:#e74c3c;">공지사항을 불러오지 못했습니다. Firestore 규칙을 확인하세요.</li>';
