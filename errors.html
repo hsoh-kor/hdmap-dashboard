@@ -55,8 +55,10 @@
         .case-box { background: #fff5f0; border: 1px solid #ffccbc; border-radius: 6px; padding: 20px; margin-top: 20px; }
         .case-box b { color: #d84315; display: block; margin-bottom: 8px; }
         
-        /* 이미지 스타일 */
+        /* 이미지 및 파일 다운로드 버튼 스타일 */
         .case-image { max-width: 100%; height: auto; border-radius: 4px; margin-top: 15px; border: 1px solid #ddd; display: block; }
+        .btn-download { display: inline-flex; align-items: center; gap: 5px; padding: 10px 15px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; margin-top: 15px; transition: background 0.2s; }
+        .btn-download:hover { background: #1a252f; }
 
         .form-actions { text-align: right; margin-top: 10px; }
         .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; }
@@ -90,8 +92,8 @@
         <textarea id="caseExample" placeholder="상세 사례 설명"></textarea>
         
         <div id="dropZone" class="drop-zone">
-            <span id="dropZoneText">📸 참고 이미지를 드래그하거나 클릭하여 업로드하세요</span>
-            <input type="file" id="caseFile" style="display:none;" accept="image/*">
+            <span id="dropZoneText">📸 참고 이미지나 PPTX 파일을 드래그하거나 클릭하여 업로드하세요</span>
+            <input type="file" id="caseFile" style="display:none;" accept="image/*, .pptx, application/vnd.openxmlformats-officedocument.presentationml.presentation">
         </div>
 
         <div class="form-actions">
@@ -108,7 +110,6 @@
 </footer>
 
 <script>
-    // 데이터 로드
     let errorCases = JSON.parse(localStorage.getItem('errorCases')) || [];
 
     function toggleForm() {
@@ -116,11 +117,14 @@
         form.style.display = (form.style.display === 'block') ? 'none' : 'block';
     }
 
-    // 드래그 앤 드롭 로직
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('caseFile');
     const dropZoneText = document.getElementById('dropZoneText');
-    let uploadedImageData = "";
+    
+    // 🌟 [수정] 파일 데이터를 더 세밀하게 담기 위한 변수들
+    let uploadedFileData = "";
+    let uploadedFileName = "";
+    let uploadedFileType = "";
 
     dropZone.onclick = () => fileInput.click();
     fileInput.onchange = (e) => handleFile(e.target.files[0]);
@@ -132,12 +136,24 @@
         handleFile(e.dataTransfer.files[0]);
     };
 
+    // 🌟 [수정] 파일이 이미지인지 PPTX인지 구별하는 로직 추가
     function handleFile(file) {
-        if (!file || !file.type.startsWith('image/')) return alert("이미지 파일만 업로드 가능합니다.");
+        if (!file) return;
+        
+        const isImage = file.type.startsWith('image/');
+        const isPPTX = file.name.toLowerCase().endsWith('.pptx') || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+        if (!isImage && !isPPTX) {
+            return alert("이미지 파일 또는 PPTX 파일만 업로드 가능합니다.");
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
-            uploadedImageData = e.target.result;
-            dropZoneText.innerHTML = `✅ 이미지 선택 완료: <b>${file.name}</b>`;
+            uploadedFileData = e.target.result;
+            uploadedFileName = file.name;
+            uploadedFileType = isImage ? 'image' : 'pptx';
+            
+            dropZoneText.innerHTML = `✅ 파일 선택 완료: <b>${file.name}</b>`;
             dropZone.classList.add('has-file');
         };
         reader.readAsDataURL(file);
@@ -153,19 +169,31 @@
 
         if (!title || !category) return alert("카테고리와 제목은 필수입니다.");
 
+        // 🌟 [수정] 파일 타입과 파일 이름도 함께 저장합니다.
         const newCase = {
             id: Date.now(),
             category, title, cause, desc, method, example,
-            image: uploadedImageData
+            fileData: uploadedFileData,
+            fileName: uploadedFileName,
+            fileType: uploadedFileType
         };
 
-        errorCases.unshift(newCase);
-        localStorage.setItem('errorCases', JSON.stringify(errorCases));
+        try {
+            errorCases.unshift(newCase);
+            localStorage.setItem('errorCases', JSON.stringify(errorCases));
+        } catch (e) {
+            alert("🚨 저장소 용량이 초과되었습니다! 용량이 큰 PPTX 파일은 저장할 수 없습니다.");
+            errorCases.shift(); // 용량 초과시 방금 넣은 데이터 다시 빼기
+            return;
+        }
         
-        // 초기화
+        // 폼 초기화
         document.querySelectorAll('.input-form input, .input-form textarea').forEach(el => el.value = "");
-        uploadedImageData = "";
-        dropZoneText.innerHTML = "📸 참고 이미지를 드래그하거나 클릭하여 업로드하세요";
+        uploadedFileData = "";
+        uploadedFileName = "";
+        uploadedFileType = "";
+        fileInput.value = "";
+        dropZoneText.innerHTML = "📸 참고 이미지나 PPTX 파일을 드래그하거나 클릭하여 업로드하세요";
         dropZone.classList.remove('has-file');
         
         toggleForm();
@@ -173,8 +201,9 @@
     }
 
     function deleteCase(id) {
-        const adminPassword = "1234"; // 비밀번호 설정
+        const adminPassword = "1234"; 
         const inputPwd = prompt("삭제를 위해 관리자 비밀번호를 입력하세요:");
+        if (inputPwd === null) return;
         if (inputPwd !== adminPassword) return alert("비밀번호가 틀렸습니다.");
 
         if (!confirm("이 사례를 정말 삭제하시겠습니까?")) return;
@@ -190,23 +219,35 @@
             return;
         }
 
-        list.innerHTML = errorCases.map(c => `
-            <section class="error-case">
-                <button class="btn-del" onclick="deleteCase(${c.id})">삭제</button>
-                <div class="category-tag">${c.category}</div>
-                <h2>${c.title}</h2>
-                <table class="error-table">
-                    <tr><th>발생 원인</th><td>${c.cause || '-'}</td></tr>
-                    <tr><th>오류 내용</th><td>${c.desc || '-'}</td></tr>
-                    <tr><th>조치 방법</th><td>${c.method || '-'}</td></tr>
-                </table>
-                <div class="case-box">
-                    <b>📍 상세 사례 및 현황</b>
-                    ${c.example || '상세 내용 없음'}
-                    ${c.image ? `<img src="${c.image}" class="case-image">` : ''}
-                </div>
-            </section>
-        `).join('');
+        list.innerHTML = errorCases.map(c => {
+            // 🌟 [수정] 파일 타입에 따라 다르게 표시 (이미지는 화면에 출력, PPTX는 다운로드 버튼)
+            let fileHtml = '';
+            if (c.fileData) {
+                if (c.fileType === 'image') {
+                    fileHtml = `<img src="${c.fileData}" class="case-image">`;
+                } else if (c.fileType === 'pptx') {
+                    fileHtml = `<a href="${c.fileData}" download="${c.fileName}" class="btn-download">📄 ${c.fileName} 다운로드</a>`;
+                }
+            }
+
+            return `
+                <section class="error-case">
+                    <button class="btn-del" onclick="deleteCase(${c.id})">삭제</button>
+                    <div class="category-tag">${c.category}</div>
+                    <h2>${c.title}</h2>
+                    <table class="error-table">
+                        <tr><th>발생 원인</th><td>${c.cause || '-'}</td></tr>
+                        <tr><th>오류 내용</th><td>${c.desc || '-'}</td></tr>
+                        <tr><th>조치 방법</th><td>${c.method || '-'}</td></tr>
+                    </table>
+                    <div class="case-box">
+                        <b>📍 상세 사례 및 현황</b>
+                        ${c.example || '상세 내용 없음'}
+                        ${fileHtml}
+                    </div>
+                </section>
+            `;
+        }).join('');
     }
 
     renderCases();
