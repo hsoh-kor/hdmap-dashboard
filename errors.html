@@ -55,10 +55,13 @@
         .case-box { background: #fff5f0; border: 1px solid #ffccbc; border-radius: 6px; padding: 20px; margin-top: 20px; }
         .case-box b { color: #d84315; display: block; margin-bottom: 8px; }
         
-        /* 이미지 및 파일 다운로드 버튼 스타일 */
+        /* 이미지 및 파일 버튼 스타일 */
         .case-image { max-width: 100%; height: auto; border-radius: 4px; margin-top: 15px; border: 1px solid #ddd; display: block; }
         .btn-download { display: inline-flex; align-items: center; gap: 5px; padding: 10px 15px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; margin-top: 15px; transition: background 0.2s; }
         .btn-download:hover { background: #1a252f; }
+        
+        /* 🌟 [신규] PDF 미리보기 창 스타일 */
+        .pdf-viewer { width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 6px; margin-top: 15px; display: block; }
 
         .form-actions { text-align: right; margin-top: 10px; }
         .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; }
@@ -92,8 +95,8 @@
         <textarea id="caseExample" placeholder="상세 사례 설명"></textarea>
         
         <div id="dropZone" class="drop-zone">
-            <span id="dropZoneText">📸 참고 이미지나 PPTX 파일을 드래그하거나 클릭하여 업로드하세요</span>
-            <input type="file" id="caseFile" style="display:none;" accept="image/*, .pptx, application/vnd.openxmlformats-officedocument.presentationml.presentation">
+            <span id="dropZoneText">📸 이미지(JPG, PNG) 또는 <b>PDF 문서</b>를 드래그하여 업로드하세요<br>(※ 미리보기를 위해 PPTX는 PDF로 저장 후 업로드 권장)</span>
+            <input type="file" id="caseFile" style="display:none;" accept="image/*, .pdf, application/pdf, .pptx, application/vnd.openxmlformats-officedocument.presentationml.presentation">
         </div>
 
         <div class="form-actions">
@@ -121,7 +124,6 @@
     const fileInput = document.getElementById('caseFile');
     const dropZoneText = document.getElementById('dropZoneText');
     
-    // 🌟 [수정] 파일 데이터를 더 세밀하게 담기 위한 변수들
     let uploadedFileData = "";
     let uploadedFileName = "";
     let uploadedFileType = "";
@@ -136,22 +138,26 @@
         handleFile(e.dataTransfer.files[0]);
     };
 
-    // 🌟 [수정] 파일이 이미지인지 PPTX인지 구별하는 로직 추가
     function handleFile(file) {
         if (!file) return;
         
         const isImage = file.type.startsWith('image/');
-        const isPPTX = file.name.toLowerCase().endsWith('.pptx') || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        const isPPTX = file.name.toLowerCase().endsWith('.pptx') || file.type.includes('presentation');
 
-        if (!isImage && !isPPTX) {
-            return alert("이미지 파일 또는 PPTX 파일만 업로드 가능합니다.");
+        if (!isImage && !isPDF && !isPPTX) {
+            return alert("이미지, PDF, 또는 PPTX 파일만 업로드 가능합니다.");
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             uploadedFileData = e.target.result;
             uploadedFileName = file.name;
-            uploadedFileType = isImage ? 'image' : 'pptx';
+            
+            // 파일 타입 판별 저장
+            if (isImage) uploadedFileType = 'image';
+            else if (isPDF) uploadedFileType = 'pdf';
+            else if (isPPTX) uploadedFileType = 'pptx';
             
             dropZoneText.innerHTML = `✅ 파일 선택 완료: <b>${file.name}</b>`;
             dropZone.classList.add('has-file');
@@ -169,7 +175,6 @@
 
         if (!title || !category) return alert("카테고리와 제목은 필수입니다.");
 
-        // 🌟 [수정] 파일 타입과 파일 이름도 함께 저장합니다.
         const newCase = {
             id: Date.now(),
             category, title, cause, desc, method, example,
@@ -182,8 +187,8 @@
             errorCases.unshift(newCase);
             localStorage.setItem('errorCases', JSON.stringify(errorCases));
         } catch (e) {
-            alert("🚨 저장소 용량이 초과되었습니다! 용량이 큰 PPTX 파일은 저장할 수 없습니다.");
-            errorCases.shift(); // 용량 초과시 방금 넣은 데이터 다시 빼기
+            alert("🚨 저장소 용량이 초과되었습니다! 용량을 줄여서 다시 시도해주세요.");
+            errorCases.shift(); 
             return;
         }
         
@@ -193,7 +198,7 @@
         uploadedFileName = "";
         uploadedFileType = "";
         fileInput.value = "";
-        dropZoneText.innerHTML = "📸 참고 이미지나 PPTX 파일을 드래그하거나 클릭하여 업로드하세요";
+        dropZoneText.innerHTML = "📸 이미지(JPG, PNG) 또는 <b>PDF 문서</b>를 드래그하여 업로드하세요";
         dropZone.classList.remove('has-file');
         
         toggleForm();
@@ -220,13 +225,18 @@
         }
 
         list.innerHTML = errorCases.map(c => {
-            // 🌟 [수정] 파일 타입에 따라 다르게 표시 (이미지는 화면에 출력, PPTX는 다운로드 버튼)
             let fileHtml = '';
             if (c.fileData) {
                 if (c.fileType === 'image') {
+                    // 1. 이미지는 그대로 표시
                     fileHtml = `<img src="${c.fileData}" class="case-image">`;
+                } else if (c.fileType === 'pdf') {
+                    // 🌟 2. PDF는 브라우저 내장 뷰어(iframe)를 통해 완벽한 미리보기 제공
+                    fileHtml = `<iframe src="${c.fileData}#toolbar=0" class="pdf-viewer"></iframe>`;
                 } else if (c.fileType === 'pptx') {
-                    fileHtml = `<a href="${c.fileData}" download="${c.fileName}" class="btn-download">📄 ${c.fileName} 다운로드</a>`;
+                    // 3. PPTX는 브라우저 기술적 한계로 다운로드 버튼 제공
+                    fileHtml = `<p style="font-size:0.8rem; color:#666;">(PPTX 파일은 브라우저 미리보기를 지원하지 않습니다)</p>
+                                <a href="${c.fileData}" download="${c.fileName}" class="btn-download">📄 ${c.fileName} 다운로드</a>`;
                 }
             }
 
@@ -241,8 +251,10 @@
                         <tr><th>조치 방법</th><td>${c.method || '-'}</td></tr>
                     </table>
                     <div class="case-box">
-                        <b>📍 상세 사례 및 현황</b>
-                        ${c.example || '상세 내용 없음'}
+                        <div style="margin-bottom: 10px;">
+                            <b>📍 상세 사례 및 현황</b>
+                            ${c.example || ''}
+                        </div>
                         ${fileHtml}
                     </div>
                 </section>
