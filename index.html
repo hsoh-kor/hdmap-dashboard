@@ -920,6 +920,35 @@
     }
 
     renderLists();
+
+    function initFirebaseSharedLists() {
+        const fb = getFirebaseTools();
+        if (!fb) return;
+
+        fb.onAuthStateChanged(fb.auth, (user) => {
+            currentUser = user;
+            const authUserInfo = document.getElementById('authUserInfo');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (user) {
+                authUserInfo.textContent = user.displayName || user.email || '로그인됨';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+            } else {
+                authUserInfo.textContent = '로그인 필요';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+            }
+        });
+
+        if (unsubscribeNotices) unsubscribeNotices();
+        if (unsubscribeResources) unsubscribeResources();
+
+        const noticeQuery = fb.query(fb.collection(fb.db, 'notices'), fb.orderBy('createdAt', 'desc'));
+        unsubscribeNotices = fb.onSnapshot(noticeQuery, (snapshot) => {
+            notices = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            renderLists();
         }, (error) => {
             console.error(error);
             document.getElementById('noticeList').innerHTML = '<li class="empty-list-message" style="color:#e74c3c;">공지사항을 불러오지 못했습니다. Firestore 규칙을 확인하세요.</li>';
@@ -960,7 +989,6 @@
 
     window.addEventListener('hdmapFirebaseReady', initFirebaseSharedLists);
     if (window.hdmapFirebase) initFirebaseSharedLists();
-
 
     // ==========================================
     // 🌙 다크모드 / 라이트모드 전환 로직
