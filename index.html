@@ -145,11 +145,11 @@
             <div class="section-header">
                 <h2>📈 전체 사업 검사 현황 요약</h2>
             </div>
-            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-bottom:5px;">■ 전체 검사 비율 (구간 수 기준)</div>
+            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-bottom:5px;">■ 전체 검사 비율 (구축연장 기준)</div>
             <div class="chart-container" style="height: 200px;">
                 <canvas id="inspectChart"></canvas>
             </div>
-            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-top:30px; margin-bottom:5px;">■ DB 담당 업체별 현황 (구간 수 기준)</div>
+            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-top:30px; margin-bottom:5px;">■ DB 담당 업체별 현황 (구축연장 기준)</div>
             <div class="chart-container" style="height: 250px;">
                 <canvas id="companyInspectChart"></canvas>
             </div>
@@ -245,13 +245,15 @@
     }
 
     function renderCharts(sectionData) {
-        let inspectCounts = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
+        let inspectLengths = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
         let companyStats = {};
 
         for (let id in sectionData) {
             let item = sectionData[id];
             let ins = item.inspect || "";
             let comp = (item.dbCompany || "").trim();
+            // 🌟 [수정] 구간 수가 아닌 연장(length) 데이터를 가져옵니다. 빈값이면 0으로 처리.
+            let len = parseFloat(item.length) || 0; 
 
             let statusKey = '미진행';
             if (ins.includes('적합') && !ins.includes('부적합')) statusKey = '적합';
@@ -259,11 +261,13 @@
             else if (ins.includes('검수의뢰')) statusKey = '검수의뢰';
             else if (ins.includes('반려')) statusKey = '반려';
 
-            inspectCounts[statusKey] += 1; // 구간 수(Count) 기준
+            // 🌟 [수정] 1씩 더하는 대신 연장(km)을 누적해서 더합니다.
+            inspectLengths[statusKey] += len; 
 
             if (comp !== "") {
                 if (!companyStats[comp]) companyStats[comp] = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
-                companyStats[comp][statusKey] += 1;
+                // 🌟 [수정] 업체별 데이터에도 연장(km)을 누적해서 더합니다.
+                companyStats[comp][statusKey] += len;
             }
         }
 
@@ -274,14 +278,25 @@
             data: {
                 labels: ['적합', '검수의뢰', '반려', '부적합', '미진행'],
                 datasets: [{ 
-                    data: [inspectCounts['적합'], inspectCounts['검수의뢰'], inspectCounts['반려'], inspectCounts['부적합'], inspectCounts['미진행']], 
+                    // 🌟 [수정] 소수점 1자리(toFixed(1))까지만 깔끔하게 표시
+                    data: [
+                        inspectLengths['적합'].toFixed(1), 
+                        inspectLengths['검수의뢰'].toFixed(1), 
+                        inspectLengths['반려'].toFixed(1), 
+                        inspectLengths['부적합'].toFixed(1), 
+                        inspectLengths['미진행'].toFixed(1)
+                    ], 
                     backgroundColor: ['#32CD32', '#1a73e8', '#f39c12', '#e74c3c', '#e0e0e0'], 
                     borderWidth: 0, hoverOffset: 4 
                 }]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false, cutout: '50%', 
-                plugins: { legend: { position: 'right', labels: { font: { family: 'Pretendard' } } } } 
+                plugins: { 
+                    legend: { position: 'right', labels: { font: { family: 'Pretendard' } } },
+                    // 🌟 [추가] 마우스를 올렸을 때 툴팁에 'km' 단위가 붙도록 설정
+                    tooltip: { callbacks: { label: function(context) { return ' ' + context.label + ': ' + context.raw + ' km'; } } }
+                } 
             }
         });
 
@@ -293,17 +308,22 @@
             data: {
                 labels: compLabels,
                 datasets: [
-                    { label: '적합', data: compLabels.map(c => companyStats[c]['적합']), backgroundColor: '#32CD32' },
-                    { label: '검수의뢰', data: compLabels.map(c => companyStats[c]['검수의뢰']), backgroundColor: '#1a73e8' },
-                    { label: '반려', data: compLabels.map(c => companyStats[c]['반려']), backgroundColor: '#f39c12' },
-                    { label: '부적합', data: compLabels.map(c => companyStats[c]['부적합']), backgroundColor: '#e74c3c' },
-                    { label: '미진행', data: compLabels.map(c => companyStats[c]['미진행']), backgroundColor: '#e0e0e0' }
+                    // 🌟 [수정] 소수점 1자리(toFixed(1))까지만 깔끔하게 표시
+                    { label: '적합', data: compLabels.map(c => companyStats[c]['적합'].toFixed(1)), backgroundColor: '#32CD32' },
+                    { label: '검수의뢰', data: compLabels.map(c => companyStats[c]['검수의뢰'].toFixed(1)), backgroundColor: '#1a73e8' },
+                    { label: '반려', data: compLabels.map(c => companyStats[c]['반려'].toFixed(1)), backgroundColor: '#f39c12' },
+                    { label: '부적합', data: compLabels.map(c => companyStats[c]['부적합'].toFixed(1)), backgroundColor: '#e74c3c' },
+                    { label: '미진행', data: compLabels.map(c => companyStats[c]['미진행'].toFixed(1)), backgroundColor: '#e0e0e0' }
                 ]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
                 scales: { x: { stacked: true }, y: { stacked: true } }, 
-                plugins: { legend: { position: 'bottom', labels: { font: { family: 'Pretendard' } } } } 
+                plugins: { 
+                    legend: { position: 'bottom', labels: { font: { family: 'Pretendard' } } },
+                    // 🌟 [추가] 마우스를 올렸을 때 툴팁에 'km' 단위가 붙도록 설정
+                    tooltip: { callbacks: { label: function(context) { return ' ' + context.dataset.label + ': ' + context.raw + ' km'; } } }
+                } 
             }
         });
     }
