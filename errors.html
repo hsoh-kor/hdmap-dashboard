@@ -201,7 +201,6 @@
         <h1 style="margin:0; font-size:1.3rem;">주요 오류사례 및 조치 가이드</h1>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
-        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleDarkMode()">🌙 다크모드</button>
         <a href="index.html" class="back-link">🏠 메인 포털로 돌아가기</a>
     </div>
 </header>
@@ -419,42 +418,15 @@
 
     renderCases();
 
-
     // ==========================================
-    // 🌙 다크모드 / 라이트모드 전환 로직
-    // - 모든 페이지에서 동일한 LocalStorage 키 사용
-    // - 저장 키: hdmap_theme = 'dark' 또는 'light'
+    // 🌙 저장된 테마 적용 로직
+    // - 전환 버튼은 index.html에만 두고,
+    // - 이 페이지는 LocalStorage에 저장된 테마만 따라갑니다.
     // ==========================================
-    (function initThemeMode() {
-        const THEME_KEY = 'hdmap_theme';
-
-        function applyTheme(theme) {
-            const isDark = theme === 'dark';
-            document.body.classList.toggle('dark-mode', isDark);
-
-            const btn = document.getElementById('themeToggleBtn');
-            if (btn) {
-                btn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
-                btn.setAttribute('aria-label', isDark ? '라이트모드로 전환' : '다크모드로 전환');
-                btn.title = isDark ? '라이트모드로 전환' : '다크모드로 전환';
-            }
-        }
-
-        window.toggleDarkMode = function() {
-            const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
-            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(THEME_KEY, nextTheme);
-            applyTheme(nextTheme);
-        };
-
-        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => applyTheme(savedTheme));
-        } else {
-            applyTheme(savedTheme);
-        }
+    (function applySavedThemeMode() {
+        const savedTheme = localStorage.getItem('hdmap_theme') || 'light';
+        document.body.classList.toggle('dark-mode', savedTheme === 'dark');
     })();
-
 </script>
 
 </body>

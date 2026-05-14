@@ -132,164 +132,7 @@
         .typing-indicator { font-size: 12px; color: #888; margin-top: 5px; display: none; align-self: flex-start; }
 
 
-        /* ==========================================
-           🌙 다크모드 스타일
-           - body.dark-mode 클래스가 붙으면 전체 UI 전환
-           - Kakao 지도 자체 타일은 API 기본 화면 유지
-        ========================================== */
-        .theme-toggle-btn {
-            margin-top: 12px;
-            width: 100%;
-            padding: 9px 12px;
-            background: rgba(255,255,255,0.12);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.35);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .theme-toggle-btn:hover { background: rgba(255,255,255,0.22); }
-
-        body.dark-mode { background-color: #0f172a; color: #e5e7eb; }
-        body.dark-mode .sidebar { background-color: #111827; color: #e5e7eb; }
-        body.dark-mode .sidebar-header { background-color: #020617; }
-        body.dark-mode .sidebar-content { background-color: #111827; }
-        body.dark-mode .resizer { background-color: #334155; }
-        body.dark-mode .resizer:hover,
-        body.dark-mode .resizer.active { background-color: #64748b; }
-        body.dark-mode .kpi-card { background: #1e293b; border-color: #334155; box-shadow: none; }
-        body.dark-mode .kpi-title { color: #cbd5e1; }
-        body.dark-mode .kpi-value { color: #93c5fd; }
-        body.dark-mode .kpi-unit { color: #94a3b8; }
-        body.dark-mode .filter-section label.section-title,
-        body.dark-mode .summary-section h3 { color: #e5e7eb; }
-        body.dark-mode .route-search-input,
-        body.dark-mode .custom-select-header {
-            background-color: #020617;
-            color: #e5e7eb;
-            border-color: #475569;
-        }
-        body.dark-mode .route-search-input::placeholder { color: #94a3b8; }
-        body.dark-mode .route-toggle-header,
-        body.dark-mode .accordion-header { background: #1e293b; border-color: #475569; color: #e5e7eb; }
-        body.dark-mode .route-toggle-header:hover,
-        body.dark-mode .accordion-header:hover,
-        body.dark-mode .accordion-item.active .accordion-header { background-color: #334155; }
-        body.dark-mode .route-list-container,
-        body.dark-mode .checkbox-group,
-        body.dark-mode .accordion-content,
-        body.dark-mode .chart-container,
-        body.dark-mode .modal-content,
-        body.dark-mode .chat-window,
-        body.dark-mode .chat-input-area { background: #111827; border-color: #475569; color: #e5e7eb; }
-        body.dark-mode .route-header { color: #bfdbfe; }
-        body.dark-mode .section-item,
-        body.dark-mode .checkbox-item,
-        body.dark-mode .legend-item,
-        body.dark-mode .tooltip-desc { color: #cbd5e1; }
-        body.dark-mode .summary-section { border-top-color: #334155; }
-        body.dark-mode .summary-table th { background-color: #1e293b; color: #e5e7eb; }
-        body.dark-mode .summary-table td { color: #e5e7eb; }
-        body.dark-mode .summary-table th,
-        body.dark-mode .summary-table td { border-color: #334155; }
-        body.dark-mode .summary-table tr:nth-child(even) { background-color: #0f172a; }
-        body.dark-mode .accordion-item { border-color: #334155; }
-        body.dark-mode .legend { background: rgba(15, 23, 42, 0.95); border-color: #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.35); }
-        body.dark-mode .legend h3 { color: #e5e7eb; border-bottom-color: #334155; }
-        body.dark-mode .custom-tooltip { background-color: #111827; border-color: #60a5fa; }
-        body.dark-mode .tooltip-title { color: #93c5fd; }
-        body.dark-mode .map-mode-control { background: #111827; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
-        body.dark-mode .map-mode-control button { background: #111827; color: #e5e7eb; border-color: #334155; }
-        body.dark-mode .map-mode-control button.active { background: #2563eb; color: #fff; }
-        body.dark-mode .modal-table th { background-color: #1e293b; color: #cbd5e1; }
-        body.dark-mode .modal-table td { color: #e5e7eb; }
-        body.dark-mode .modal-table th,
-        body.dark-mode .modal-table td { border-bottom-color: #334155; }
-        body.dark-mode .chat-messages { background-color: #0f172a; }
-        body.dark-mode .chat-message.bot { background-color: #1e293b; border-color: #334155; color: #e5e7eb; }
-        body.dark-mode .chat-input-area input { background-color: #020617; color: #e5e7eb; border-color: #475569; }
-        body.dark-mode .chat-input-area input::placeholder { color: #94a3b8; }
-        body.dark-mode #resetFiltersBtn { background: #1f2937 !important; color: #e5e7eb !important; border-color: #475569 !important; }
-
-
-
-        /* ==========================================
-           🌙 다크모드 보강 패치 v2
-           - 대시보드 인라인 색상/모달/챗봇/필터 글씨 보정
-        ========================================== */
-        body.dark-mode h1,
-        body.dark-mode h2,
-        body.dark-mode h3,
-        body.dark-mode h4,
-        body.dark-mode .sidebar-content,
-        body.dark-mode .sidebar-content *:not(canvas):not(button),
-        body.dark-mode .accordion-content,
-        body.dark-mode .accordion-content *:not(canvas):not(button),
-        body.dark-mode .route-list-container,
-        body.dark-mode .route-list-container *,
-        body.dark-mode .checkbox-group,
-        body.dark-mode .checkbox-group *,
-        body.dark-mode .modal-content,
-        body.dark-mode .modal-content *,
-        body.dark-mode .legend,
-        body.dark-mode .legend *,
-        body.dark-mode .chat-window,
-        body.dark-mode .chat-window *:not(button),
-        body.dark-mode [style*="color:#333"],
-        body.dark-mode [style*="color: #333"],
-        body.dark-mode [style*="color:#444"],
-        body.dark-mode [style*="color: #444"],
-        body.dark-mode [style*="color:#555"],
-        body.dark-mode [style*="color: #555"],
-        body.dark-mode [style*="color:#666"],
-        body.dark-mode [style*="color: #666"],
-        body.dark-mode [style*="color:#777"],
-        body.dark-mode [style*="color: #777"],
-        body.dark-mode [style*="color:#888"],
-        body.dark-mode [style*="color: #888"],
-        body.dark-mode [style*="color:#999"],
-        body.dark-mode [style*="color: #999"] {
-            color: #dbeafe !important;
-        }
-        body.dark-mode [style*="background-color: #e3f2fd"],
-        body.dark-mode [style*="background-color:#e3f2fd"],
-        body.dark-mode [style*="background: #f8f9fa"],
-        body.dark-mode [style*="background:#f8f9fa"],
-        body.dark-mode [style*="background: #f9f9f9"],
-        body.dark-mode [style*="background:#f9f9f9"],
-        body.dark-mode [style*="background: white"],
-        body.dark-mode [style*="background:white"] {
-            background: #1e293b !important;
-            background-color: #1e293b !important;
-            border-color: #475569 !important;
-            color: #e5e7eb !important;
-        }
-        body.dark-mode input,
-        body.dark-mode textarea {
-            background-color: #020617 !important;
-            color: #f8fafc !important;
-            border-color: #475569 !important;
-        }
-        body.dark-mode input::placeholder,
-        body.dark-mode textarea::placeholder { color: #94a3b8 !important; }
-        body.dark-mode button:not(.active):not(.report-btn):not(.chat-input-area button):not(#closeRoadviewBtn) {
-            color: #e5e7eb;
-        }
-        body.dark-mode .map-mode-control button.active,
-        body.dark-mode .chart-toggle-control button.active,
-        body.dark-mode .report-btn,
-        body.dark-mode .chat-input-area button,
-        body.dark-mode #closeRoadviewBtn,
-        body.dark-mode .theme-toggle-btn { color: #ffffff !important; }
-        body.dark-mode .chat-message.user { color: #ffffff !important; }
-        body.dark-mode .typing-indicator { color: #cbd5e1 !important; }
-        body.dark-mode .modal-close { color: #cbd5e1 !important; }
-        body.dark-mode .modal-close:hover { color: #ffffff !important; }
-
-    </style>
+</style>
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7198914f7509f89a5434593cec182ab4"></script>
 </head>
 <body>
@@ -299,7 +142,6 @@
         <div class="sidebar-header">
             <h2>'26년도 정밀도로지도 제작 현황</h2>
             <p>실시간 공정 관리 시스템</p>
-            <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleDarkMode()">🌙 다크모드</button>
         </div>
         <div class="sidebar-content">
             
@@ -1402,43 +1244,6 @@
         // 5. 지도를 전체 범위로 줌 아웃해서 한눈에 보이게 촥! 펼치기
         zoomToVisibleSections(visibleIds);
     });
-
-
-    // ==========================================
-    // 🌙 다크모드 / 라이트모드 전환 로직
-    // - 모든 페이지에서 동일한 LocalStorage 키 사용
-    // - 저장 키: hdmap_theme = 'dark' 또는 'light'
-    // ==========================================
-    (function initThemeMode() {
-        const THEME_KEY = 'hdmap_theme';
-
-        function applyTheme(theme) {
-            const isDark = theme === 'dark';
-            document.body.classList.toggle('dark-mode', isDark);
-
-            const btn = document.getElementById('themeToggleBtn');
-            if (btn) {
-                btn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
-                btn.setAttribute('aria-label', isDark ? '라이트모드로 전환' : '다크모드로 전환');
-                btn.title = isDark ? '라이트모드로 전환' : '다크모드로 전환';
-            }
-        }
-
-        window.toggleDarkMode = function() {
-            const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
-            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(THEME_KEY, nextTheme);
-            applyTheme(nextTheme);
-        };
-
-        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => applyTheme(savedTheme));
-        } else {
-            applyTheme(savedTheme);
-        }
-    })();
-
 </script>
 </body>
 </html>
