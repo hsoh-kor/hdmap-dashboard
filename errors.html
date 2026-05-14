@@ -234,9 +234,60 @@
         body.dark-mode .shared-help-text,
         body.dark-mode .case-meta { color: #cbd5e1 !important; }
 
+
+
+        /* ==========================================
+           ⏳ 업로드/저장 로딩 표시
+        ========================================== */
+        .upload-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.55);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .upload-overlay.active { display: flex; }
+        .upload-box {
+            min-width: 260px;
+            max-width: 90%;
+            background: #ffffff;
+            color: #2c3e50;
+            border-radius: 12px;
+            padding: 24px 28px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            border: 1px solid var(--border-color);
+        }
+        .upload-spinner {
+            width: 36px;
+            height: 36px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            animation: spin 0.8s linear infinite;
+        }
+        .upload-message { font-size: 0.95rem; font-weight: 800; }
+        .upload-sub-message { margin-top: 6px; font-size: 0.78rem; color: #666; line-height: 1.4; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        body.dark-mode .upload-box { background: #111827; color: #e5e7eb; border-color: #334155; }
+        body.dark-mode .upload-sub-message { color: #cbd5e1; }
+
     </style>
 </head>
 <body>
+
+<div id="uploadOverlay" class="upload-overlay" aria-live="polite" aria-busy="true">
+    <div class="upload-box">
+        <div class="upload-spinner"></div>
+        <div id="uploadOverlayMessage" class="upload-message">처리 중입니다...</div>
+        <div class="upload-sub-message">파일 용량에 따라 시간이 걸릴 수 있습니다. 창을 닫지 마세요.</div>
+    </div>
+</div>
+
 
 <header>
     <div style="display:flex; align-items:center; gap:15px;">
@@ -272,7 +323,7 @@
         <div style="background: #f0f7ff; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #cce5ff;">
             <b style="color: #0056b3; font-size: 0.9rem; display: block; margin-bottom: 10px;">💾 첨부 파일 업로드</b>
             <div id="dropZone" class="drop-zone" style="margin-bottom: 0;">
-                <span id="dropZoneText">📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)</span>
+                <span id="dropZoneText">📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX, 200MB 이하) (JPG/PNG/PDF/PPTX, 200MB 이하)</span>
                 <input type="file" id="caseFile" style="display:none;" accept="image/*,.pdf,application/pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             </div>
         </div>
@@ -342,6 +393,36 @@
         return false;
     }
 
+
+
+    const ADMIN_EMAILS = ['llgsy@naver.com'];
+
+    function isAdminUser() {
+        const email = (currentUser && currentUser.email ? currentUser.email : '').toLowerCase();
+        return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
+    }
+
+    function canDeleteCase(item) {
+        if (!currentUser || !item) return false;
+        return isAdminUser() || item.createdByUid === currentUser.uid || (item.createdByEmail && currentUser.email && item.createdByEmail.toLowerCase() === currentUser.email.toLowerCase());
+    }
+
+    function requireDeletePermission(item) {
+        if (!requireLogin()) return false;
+        if (canDeleteCase(item)) return true;
+        alert('삭제 권한이 없습니다. 작성자 본인 또는 관리자만 삭제할 수 있습니다.');
+        return false;
+    }
+
+    function setUploadLoading(isLoading, message) {
+        const overlay = document.getElementById('uploadOverlay');
+        const msg = document.getElementById('uploadOverlayMessage');
+        if (!overlay) return;
+        if (msg) msg.textContent = message || '처리 중입니다...';
+        overlay.classList.toggle('active', !!isLoading);
+        document.body.style.cursor = isLoading ? 'wait' : '';
+    }
+
     function toggleForm() {
         const form = document.getElementById('errorForm');
         form.style.display = (form.style.display === 'block') ? 'none' : 'block';
@@ -369,7 +450,7 @@
         const isImage = file.type.startsWith('image/');
         const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
         const isPPTX = file.name.toLowerCase().endsWith('.pptx') || file.type.includes('presentation');
-        const maxSize = 500 * 1024 * 1024;
+        const maxSize = 200 * 1024 * 1024;
 
         if (!isImage && !isPDF && !isPPTX) {
             fileInput.value = '';
@@ -379,7 +460,7 @@
         if (file.size > maxSize) {
             fileInput.value = '';
             selectedCaseFile = null;
-            return alert("500MB 이하 파일만 업로드할 수 있습니다.");
+            return alert("200MB 이하 파일만 업로드할 수 있습니다.");
         }
 
         selectedCaseFile = file;
@@ -402,6 +483,7 @@
 
         if (!title || !category) return alert("카테고리와 제목은 필수입니다.");
 
+        setUploadLoading(true, file ? `오류사례 첨부파일을 업로드하는 중입니다... (${formatFileSize(file.size)})` : '오류사례를 등록하는 중입니다...');
         try {
             let fileInfo = {
                 fileName: '',
@@ -412,8 +494,14 @@
             };
 
             if (file) {
+                const maxSize = 200 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    setUploadLoading(false);
+                    return alert("200MB 이하 파일만 업로드할 수 있습니다.");
+                }
+
                 const safeName = sanitizeFileName(file.name);
-                const storagePath = `errorCases/${Date.now()}_${safeName}`;
+                const storagePath = `errorCases/${currentUser.uid}/${Date.now()}_${safeName}`;
                 const fileRef = fb.ref(fb.storage, storagePath);
                 await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
                 const fileUrl = await fb.getDownloadURL(fileRef);
@@ -433,6 +521,7 @@
                 };
             }
 
+            setUploadLoading(true, '오류사례 정보를 저장하는 중입니다...');
             await fb.addDoc(fb.collection(fb.db, 'errorCases'), {
                 category,
                 title,
@@ -450,23 +539,27 @@
             document.querySelectorAll('.input-form input, .input-form textarea').forEach(el => el.value = "");
             selectedCaseFile = null;
             fileInput.value = "";
-            dropZoneText.innerHTML = "📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)";
+            dropZoneText.innerHTML = "📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX, 200MB 이하) (JPG/PNG/PDF/PPTX, 200MB 이하)";
             dropZone.classList.remove('has-file');
             toggleForm();
+            alert('오류사례가 등록되었습니다.');
         } catch (error) {
             console.error(error);
             alert("오류사례 등록에 실패했습니다. Firestore/Storage 규칙과 로그인 상태를 확인하세요.\n" + error.message);
+        } finally {
+            setUploadLoading(false);
         }
     }
 
     async function deleteCase(id) {
-        if (!requireLogin()) return;
         const fb = getFirebaseTools();
         if (!fb) return;
+        const target = errorCases.find(c => c.id === id);
+        if (!requireDeletePermission(target)) return;
         if (!confirm("이 사례를 정말 삭제하시겠습니까?")) return;
 
+        setUploadLoading(true, '오류사례를 삭제하는 중입니다...');
         try {
-            const target = errorCases.find(c => c.id === id);
             await fb.deleteDoc(fb.doc(fb.db, 'errorCases', id));
             if (target && target.storagePath) {
                 try {
@@ -477,7 +570,9 @@
             }
         } catch (error) {
             console.error(error);
-            alert("삭제에 실패했습니다. 권한 또는 Firebase 규칙을 확인하세요.\n" + error.message);
+            alert("삭제에 실패했습니다. 작성자 본인 또는 관리자만 삭제할 수 있습니다. Firebase 규칙을 확인하세요.\n" + error.message);
+        } finally {
+            setUploadLoading(false);
         }
     }
 
@@ -505,9 +600,13 @@
                 }
             }
 
+            const deleteHtml = canDeleteCase(c)
+                ? `<button class="btn-del" onclick="deleteCase('${c.id}')">삭제</button>`
+                : '';
+
             return `
                 <section class="error-case">
-                    <button class="btn-del" onclick="deleteCase('${c.id}')">삭제</button>
+                    ${deleteHtml}
                     <div class="category-tag">${escapeHtml(c.category)}</div>
                     <h2>${escapeHtml(c.title)}</h2>
                     <div class="case-meta">등록자: ${escapeHtml(c.createdByName || '등록자 미상')} · 등록일: ${formatFirebaseDate(c.createdAt)}${c.fileName ? ` · 첨부: ${escapeHtml(c.fileName)} (${formatFileSize(c.fileSize)})` : ''}</div>
@@ -547,6 +646,7 @@
                 loginBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
             }
+            renderCases();
         });
 
         if (unsubscribeErrorCases) unsubscribeErrorCases();

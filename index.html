@@ -306,9 +306,60 @@
         body.dark-mode .empty-list-message,
         body.dark-mode .auth-user { color: #cbd5e1 !important; }
 
+
+
+        /* ==========================================
+           ⏳ 업로드/저장 로딩 표시
+        ========================================== */
+        .upload-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.55);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .upload-overlay.active { display: flex; }
+        .upload-box {
+            min-width: 260px;
+            max-width: 90%;
+            background: #ffffff;
+            color: #2c3e50;
+            border-radius: 12px;
+            padding: 24px 28px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            border: 1px solid var(--border-color);
+        }
+        .upload-spinner {
+            width: 36px;
+            height: 36px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            animation: spin 0.8s linear infinite;
+        }
+        .upload-message { font-size: 0.95rem; font-weight: 800; }
+        .upload-sub-message { margin-top: 6px; font-size: 0.78rem; color: #666; line-height: 1.4; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        body.dark-mode .upload-box { background: #111827; color: #e5e7eb; border-color: #334155; }
+        body.dark-mode .upload-sub-message { color: #cbd5e1; }
+
     </style>
 </head>
 <body>
+
+<div id="uploadOverlay" class="upload-overlay" aria-live="polite" aria-busy="true">
+    <div class="upload-box">
+        <div class="upload-spinner"></div>
+        <div id="uploadOverlayMessage" class="upload-message">처리 중입니다...</div>
+        <div class="upload-sub-message">파일 용량에 따라 시간이 걸릴 수 있습니다. 창을 닫지 마세요.</div>
+    </div>
+</div>
+
 
 <header>
     <h1>
@@ -677,6 +728,36 @@
         return false;
     }
 
+
+
+    const ADMIN_EMAILS = ['llgsy@naver.com'];
+
+    function isAdminUser() {
+        const email = (currentUser && currentUser.email ? currentUser.email : '').toLowerCase();
+        return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
+    }
+
+    function canDeleteDoc(item) {
+        if (!currentUser || !item) return false;
+        return isAdminUser() || item.createdByUid === currentUser.uid || (item.createdByEmail && currentUser.email && item.createdByEmail.toLowerCase() === currentUser.email.toLowerCase());
+    }
+
+    function requireDeletePermission(item) {
+        if (!requireLogin()) return false;
+        if (canDeleteDoc(item)) return true;
+        alert('삭제 권한이 없습니다. 작성자 본인 또는 관리자만 삭제할 수 있습니다.');
+        return false;
+    }
+
+    function setUploadLoading(isLoading, message) {
+        const overlay = document.getElementById('uploadOverlay');
+        const msg = document.getElementById('uploadOverlayMessage');
+        if (!overlay) return;
+        if (msg) msg.textContent = message || '처리 중입니다...';
+        overlay.classList.toggle('active', !!isLoading);
+        document.body.style.cursor = isLoading ? 'wait' : '';
+    }
+
     function toggleForm(id) {
         const form = document.getElementById(id);
         form.style.display = (form.style.display === 'block') ? 'none' : 'block';
@@ -753,6 +834,7 @@
             const content = document.getElementById('noticeContent').value.trim();
             if (!title || !content) return alert("제목과 내용을 모두 입력하세요.");
 
+            setUploadLoading(true, '공지사항을 등록하는 중입니다...');
             try {
                 await fb.addDoc(fb.collection(fb.db, 'notices'), {
                     title,
@@ -766,6 +848,8 @@
             } catch (error) {
                 console.error(error);
                 alert("공지사항 등록에 실패했습니다. Firestore 규칙과 로그인 상태를 확인하세요.\n" + error.message);
+            } finally {
+                setUploadLoading(false);
             }
             return;
         }
@@ -778,9 +862,9 @@
         if (!name) return alert("자료 명칭을 입력하세요.");
         if (!link && !file) return alert("파일을 선택하거나 구글드라이브 링크를 입력하세요.");
 
-        // 링크와 파일이 동시에 있는 경우에는 링크를 우선 등록합니다.
         try {
             if (link) {
+                setUploadLoading(true, '구글드라이브 링크 자료를 등록하는 중입니다...');
                 await fb.addDoc(fb.collection(fb.db, 'resources'), {
                     name,
                     resourceType: 'drive-link',
@@ -806,12 +890,14 @@
                 return alert("200MB 이하 파일만 직접 업로드할 수 있습니다. 200MB 초과 파일은 구글드라이브 링크로 등록해 주세요.");
             }
 
+            setUploadLoading(true, `자료 파일을 업로드하는 중입니다... (${formatFileSize(file.size)})`);
             const safeName = sanitizeFileName(file.name);
-            const storagePath = `resources/${Date.now()}_${safeName}`;
+            const storagePath = `resources/${currentUser.uid}/${Date.now()}_${safeName}`;
             const fileRef = fb.ref(fb.storage, storagePath);
             await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
             const fileUrl = await fb.getDownloadURL(fileRef);
 
+            setUploadLoading(true, '업로드 정보를 저장하는 중입니다...');
             await fb.addDoc(fb.collection(fb.db, 'resources'), {
                 name,
                 resourceType: 'storage-file',
@@ -831,20 +917,27 @@
         } catch (error) {
             console.error(error);
             alert("자료 등록에 실패했습니다. Firestore/Storage 규칙과 로그인 상태를 확인하세요.\n\n오류 내용: " + error.message);
+        } finally {
+            setUploadLoading(false);
         }
     }
 
     async function deleteItem(type, id) {
-        if (!requireLogin()) return;
         const fb = getFirebaseTools();
         if (!fb) return;
+
+        const target = type === 'notice'
+            ? notices.find(n => n.id === id)
+            : resources.find(r => r.id === id);
+
+        if (!requireDeletePermission(target)) return;
         if (!confirm("정말 이 항목을 삭제하시겠습니까?")) return;
 
+        setUploadLoading(true, '삭제하는 중입니다...');
         try {
             if (type === 'notice') {
                 await fb.deleteDoc(fb.doc(fb.db, 'notices', id));
             } else {
-                const target = resources.find(r => r.id === id);
                 await fb.deleteDoc(fb.doc(fb.db, 'resources', id));
                 if (target && target.storagePath) {
                     try {
@@ -856,7 +949,9 @@
             }
         } catch (error) {
             console.error(error);
-            alert("삭제에 실패했습니다. 권한 또는 Firebase 규칙을 확인하세요.\n" + error.message);
+            alert("삭제에 실패했습니다. 작성자 본인 또는 관리자만 삭제할 수 있습니다. Firebase 규칙을 확인하세요.\n" + error.message);
+        } finally {
+            setUploadLoading(false);
         }
     }
 
@@ -871,18 +966,23 @@
         if (notices.length === 0) {
             noticeList.innerHTML = '<li class="empty-list-message">등록된 공지사항이 없습니다.</li>';
         } else {
-            noticeList.innerHTML = notices.map(n => `
-                <li class="list-item">
-                    <div class="notice-header" onclick="toggleNotice('${n.id}')">
-                        <span style="font-weight:bold; color:var(--primary-color)">${escapeHtml(n.title)}</span>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="color:#999; font-size: 0.8rem;">${formatFirebaseDate(n.createdAt)}</span>
-                            <button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', '${n.id}')">지우기</button>
+            noticeList.innerHTML = notices.map(n => {
+                const deleteHtml = canDeleteDoc(n)
+                    ? `<button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', '${n.id}')">지우기</button>`
+                    : '';
+                return `
+                    <li class="list-item">
+                        <div class="notice-header" onclick="toggleNotice('${n.id}')">
+                            <span style="font-weight:bold; color:var(--primary-color)">${escapeHtml(n.title)}</span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="color:#999; font-size: 0.8rem;">${formatFirebaseDate(n.createdAt)}</span>
+                                ${deleteHtml}
+                            </div>
                         </div>
-                    </div>
-                    <div id="content-${n.id}" class="notice-content">${escapeHtml(n.content)}</div>
-                </li>
-            `).join('');
+                        <div id="content-${n.id}" class="notice-content">${escapeHtml(n.content)}</div>
+                    </li>
+                `;
+            }).join('');
         }
 
         const resourceList = document.getElementById('resourceList');
@@ -903,6 +1003,10 @@
                            <a href="${escapeHtml(openUrl)}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>`}`
                     : `<span style="font-size:0.75rem; color:#e74c3c;">링크 없음</span>`;
 
+                const deleteHtml = canDeleteDoc(r)
+                    ? `<button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>`
+                    : '';
+
                 return `
                     <li class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
                         <div style="flex:1; min-width:0;">
@@ -911,7 +1015,7 @@
                         </div>
                         <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
                             ${actionHtml}
-                            <button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>
+                            ${deleteHtml}
                         </div>
                     </li>
                 `;
@@ -940,6 +1044,7 @@
                 loginBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
             }
+            renderLists();
         });
 
         if (unsubscribeNotices) unsubscribeNotices();
