@@ -407,12 +407,12 @@
             <div id="resourceForm" class="input-form">
                 <input type="text" id="resourceName" placeholder="자료 명칭을 입력하세요">
                 
-                <p class="shared-help-text">자료는 Firebase Storage에 직접 업로드되며, 등록 후 모든 사용자가 같은 목록에서 확인할 수 있습니다. 200MB 이하 파일은 직접 업로드할 수 있고, 200MB 초과 대용량 파일은 구글드라이브 공유 링크로 등록하세요.</p>
+                <p class="shared-help-text">200MB 이하 파일은 직접 업로드하고, 200MB 초과 대용량 파일은 구글드라이브 링크로 등록하세요. 등록 후 모든 사용자가 같은 목록에서 확인할 수 있습니다.</p>
                 <div style="background: #f0f7ff; padding: 12px; border-radius: 6px; border: 1px solid #cce5ff; margin-bottom: 10px;">
-                    <input type="text" id="resourceExternalLink" placeholder="🔗 옵션 1. 200MB 초과 대용량 파일 공유 링크 (구글드라이브 등 URL 입력)" style="width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box;">
+                    <input type="text" id="resourceExternalLink" placeholder="🔗 옵션 1. 200MB 초과 대용량 구글드라이브 링크 입력" style="width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box;">
                     <div style="text-align:center; font-size:0.75rem; color:#666; margin:8px 0;">또는</div>
                     <div id="dropZone" class="drop-zone" style="margin-bottom:0; padding:15px;">
-                        <span id="dropZoneText">📁 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드</span>
+                        <span id="dropZoneText">📁 옵션 2. 200MB 이하 파일 드래그 또는 클릭 업로드</span>
                         <input type="file" id="resourceFile" accept="image/*,.pdf,application/pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.zip,application/zip,application/x-zip-compressed">
                     </div>
                 </div>
@@ -693,16 +693,14 @@
         }
     });
 
-    if (extLink) {
-        extLink.addEventListener('input', () => {
-            if (extLink.value.trim() !== '') {
-                pendingResourceFile = null;
-                fi.value = '';
-                dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드';
-                dz.classList.remove('has-file');
-            }
-        });
-    }
+    extLink.addEventListener('input', () => {
+        if (extLink.value.trim() !== '') {
+            pendingResourceFile = null;
+            fi.value = '';
+            dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일 드래그 또는 클릭 업로드';
+            dz.classList.remove('has-file');
+        }
+    });
 
     function setPendingResourceFile(file) {
         if (!file) return;
@@ -710,12 +708,12 @@
         if (file.size > maxSize) {
             fi.value = '';
             pendingResourceFile = null;
-            dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드';
+            dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일 드래그 또는 클릭 업로드';
             dz.classList.remove('has-file');
-            return alert("200MB 이하 파일만 직접 업로드할 수 있습니다. 200MB 초과 대용량 파일은 구글드라이브 공유 링크를 입력해 주세요.");
+            return alert("200MB 이하 파일만 직접 업로드할 수 있습니다. 200MB 초과 파일은 구글드라이브 링크로 등록해 주세요.");
         }
         pendingResourceFile = file;
-        if (extLink) extLink.value = '';
+        extLink.value = '';
         dzt.innerHTML = `✅ <b>${escapeHtml(file.name)}</b> (${formatFileSize(file.size)})`;
         dz.classList.add('has-file');
     }
@@ -729,10 +727,10 @@
     function cancelResource() {
         document.getElementById('resourceName').value = '';
         pendingResourceFile = null;
-        dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드';
+        dzt.innerHTML = '📁 옵션 2. 200MB 이하 파일 드래그 또는 클릭 업로드';
         dz.classList.remove('has-file');
         fi.value = '';
-        if (extLink) extLink.value = '';
+        extLink.value = '';
         toggleForm('resourceForm');
     }
 
@@ -762,11 +760,12 @@
             }
         } else {
             const name = document.getElementById('resourceName').value.trim();
-            const link = extLink ? extLink.value.trim() : '';
+            const link = extLink.value.trim();
             const file = pendingResourceFile || fi.files[0];
 
-            if (!name) return alert("자료 명칭을 입력하세요.");
-            if (!link && !file) return alert("200MB 이하 파일을 선택하거나, 200MB 초과 대용량 파일은 구글드라이브 공유 링크를 입력하세요.");
+            if (!name || (!link && !file)) {
+                return alert("자료 명칭과 파일 또는 구글드라이브 링크를 입력하세요.");
+            }
 
             try {
                 if (link) {
@@ -774,7 +773,6 @@
                         name,
                         externalLink: link,
                         fileName: '구글드라이브 링크',
-                        fileUrl: link,
                         fileType: 'external-link',
                         fileSize: 0,
                         storagePath: '',
@@ -783,28 +781,26 @@
                         createdByName: currentUser.displayName || currentUser.email || '사용자',
                         createdByEmail: currentUser.email || ''
                     });
-                    cancelResource();
-                    return;
+                } else {
+                    const safeName = sanitizeFileName(file.name);
+                    const storagePath = `resources/${Date.now()}_${safeName}`;
+                    const fileRef = fb.ref(fb.storage, storagePath);
+                    await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
+                    const fileUrl = await fb.getDownloadURL(fileRef);
+
+                    await fb.addDoc(fb.collection(fb.db, 'resources'), {
+                        name,
+                        fileName: file.name,
+                        fileUrl,
+                        fileType: file.type || '',
+                        fileSize: file.size,
+                        storagePath,
+                        createdAt: fb.serverTimestamp(),
+                        createdByUid: currentUser.uid,
+                        createdByName: currentUser.displayName || currentUser.email || '사용자',
+                        createdByEmail: currentUser.email || ''
+                    });
                 }
-
-                const safeName = sanitizeFileName(file.name);
-                const storagePath = `resources/${Date.now()}_${safeName}`;
-                const fileRef = fb.ref(fb.storage, storagePath);
-                await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
-                const fileUrl = await fb.getDownloadURL(fileRef);
-
-                await fb.addDoc(fb.collection(fb.db, 'resources'), {
-                    name,
-                    fileName: file.name,
-                    fileUrl,
-                    fileType: file.type || '',
-                    fileSize: file.size,
-                    storagePath,
-                    createdAt: fb.serverTimestamp(),
-                    createdByUid: currentUser.uid,
-                    createdByName: currentUser.displayName || currentUser.email || '사용자',
-                    createdByEmail: currentUser.email || ''
-                });
                 cancelResource();
             } catch (error) {
                 console.error(error);
@@ -868,22 +864,27 @@
         if (resources.length === 0) {
             resourceList.innerHTML = '<li class="empty-list-message">등록된 자료가 없습니다.</li>';
         } else {
-            resourceList.innerHTML = resources.map(r => `
-                <li class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                    <div style="flex:1; min-width:0;">
-                        <span style="display:block; font-weight:bold;">${escapeHtml(r.name)}</span>
-                        <div class="resource-meta">
-                            ${r.externalLink ? '구글드라이브 링크' : `${escapeHtml(r.fileName || '파일명 없음')} · ${formatFileSize(r.fileSize)}`} · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}
+            resourceList.innerHTML = resources.map(r => {
+                const isExternal = !!r.externalLink;
+                const openUrl = isExternal ? r.externalLink : r.fileUrl;
+                const metaText = isExternal
+                    ? `구글드라이브 링크 · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}`
+                    : `${escapeHtml(r.fileName || '파일명 없음')} · ${formatFileSize(r.fileSize)} · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}`;
+
+                return `
+                    <li class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                        <div style="flex:1; min-width:0;">
+                            <span style="display:block; font-weight:bold;">${escapeHtml(r.name)}</span>
+                            <div class="resource-meta">${metaText}</div>
                         </div>
-                    </div>
-                    <div style="display:flex; gap:8px; flex-shrink:0;">
-                        ${r.externalLink
-                            ? `<a href="${r.externalLink}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">구글드라이브 열기</a>`
-                            : `<a href="${r.fileUrl}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">보기</a><a href="${r.fileUrl}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>`}
-                        <button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>
-                    </div>
-                </li>
-            `).join('');
+                        <div style="display:flex; gap:8px; flex-shrink:0;">
+                            <a href="${openUrl}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">${isExternal ? '구글드라이브 열기' : '보기'}</a>
+                            ${isExternal ? '' : `<a href="${openUrl}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>`}
+                            <button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
         }
     }
 
