@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     // 구글 서버에 '사용 가능한 모델 목록'을 요청
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const data = await response.json();
     
     // 화면에 결과 출력
