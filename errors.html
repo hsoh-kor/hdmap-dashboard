@@ -70,6 +70,68 @@
         .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; }
 
         footer { text-align: center; padding: 3rem; color: #999; font-size: 0.85rem; }
+
+
+        /* ==========================================
+           🌙 다크모드 스타일
+           - 오류사례 가이드 전용
+           - LocalStorage 키는 다른 페이지와 동일하게 hdmap_theme 사용
+        ========================================== */
+        .theme-toggle-btn {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            padding: 5px 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .theme-toggle-btn:hover { background: rgba(255,255,255,0.22); }
+
+        body.dark-mode {
+            --primary-color: #111827;
+            --accent-color: #fb923c;
+            --bg-color: #0f172a;
+            --text-color: #e5e7eb;
+            --border-color: #334155;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        body.dark-mode header { background-color: #020617; box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
+        body.dark-mode section.error-case,
+        body.dark-mode .input-form { background: #111827; border-color: #334155; color: #e5e7eb; }
+        body.dark-mode h2 { color: #e5e7eb; }
+        body.dark-mode .section-header p,
+        body.dark-mode footer,
+        body.dark-mode .case-box,
+        body.dark-mode .error-table td { color: #cbd5e1 !important; }
+        body.dark-mode .input-form input,
+        body.dark-mode .input-form textarea,
+        body.dark-mode #caseExternalLink {
+            background-color: #020617;
+            color: #e5e7eb;
+            border-color: #475569;
+        }
+        body.dark-mode .input-form input::placeholder,
+        body.dark-mode .input-form textarea::placeholder { color: #94a3b8; }
+        body.dark-mode .drop-zone { background: #020617; border-color: #475569; color: #cbd5e1; }
+        body.dark-mode .drop-zone.dragover,
+        body.dark-mode .drop-zone.has-file { background: #1e293b; border-color: #fb923c; color: #fdba74; }
+        body.dark-mode .category-tag { background: #334155; color: #cbd5e1; }
+        body.dark-mode .error-table th { background-color: #1e293b; color: #e5e7eb; }
+        body.dark-mode .error-table th,
+        body.dark-mode .error-table td { border-color: #334155; }
+        body.dark-mode .case-box { background: #1f2937; border-color: #7c2d12; }
+        body.dark-mode .case-box b { color: #fdba74; }
+        body.dark-mode .btn-cancel { background: #334155; color: #e5e7eb; }
+        body.dark-mode .pdf-viewer,
+        body.dark-mode .case-image { border-color: #475569; }
+        body.dark-mode .back-link { background: rgba(255,255,255,0.12); }
+        body.dark-mode .back-link:hover { background: rgba(255,255,255,0.22); }
+
     </style>
 </head>
 <body>
@@ -79,7 +141,10 @@
         <img src="logo_Type8.png" alt="Logo" style="height:32px;">
         <h1 style="margin:0; font-size:1.3rem;">주요 오류사례 및 조치 가이드</h1>
     </div>
-    <a href="index.html" class="back-link">🏠 메인 포털로 돌아가기</a>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleDarkMode()">🌙 다크모드</button>
+        <a href="index.html" class="back-link">🏠 메인 포털로 돌아가기</a>
+    </div>
 </header>
 
 <div class="container">
@@ -294,6 +359,43 @@
     }
 
     renderCases();
+
+
+    // ==========================================
+    // 🌙 다크모드 / 라이트모드 전환 로직
+    // - 모든 페이지에서 동일한 LocalStorage 키 사용
+    // - 저장 키: hdmap_theme = 'dark' 또는 'light'
+    // ==========================================
+    (function initThemeMode() {
+        const THEME_KEY = 'hdmap_theme';
+
+        function applyTheme(theme) {
+            const isDark = theme === 'dark';
+            document.body.classList.toggle('dark-mode', isDark);
+
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                btn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
+                btn.setAttribute('aria-label', isDark ? '라이트모드로 전환' : '다크모드로 전환');
+                btn.title = isDark ? '라이트모드로 전환' : '다크모드로 전환';
+            }
+        }
+
+        window.toggleDarkMode = function() {
+            const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(THEME_KEY, nextTheme);
+            applyTheme(nextTheme);
+        };
+
+        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => applyTheme(savedTheme));
+        } else {
+            applyTheme(savedTheme);
+        }
+    })();
+
 </script>
 
 </body>

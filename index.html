@@ -108,6 +108,87 @@
             background-color: #219150;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+
+        /* ==========================================
+           🌙 다크모드 스타일
+           - body.dark-mode 클래스가 붙으면 전체 색상 전환
+           - 기존 Vanilla JS / LocalStorage 구조 유지
+        ========================================== */
+        .theme-toggle-btn {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            padding: 7px 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .theme-toggle-btn:hover { background: rgba(255,255,255,0.22); }
+
+        body.dark-mode {
+            --primary-color: #111827;
+            --secondary-color: #1f2937;
+            --accent-color: #60a5fa;
+            --bg-color: #0f172a;
+            --text-color: #e5e7eb;
+            --border-color: #334155;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        body.dark-mode header { background-color: #020617; box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
+        body.dark-mode section,
+        body.dark-mode .card,
+        body.dark-mode .input-form,
+        body.dark-mode .accordion-content,
+        body.dark-mode .chart-container {
+            background-color: #111827;
+            border-color: #334155;
+            color: #e5e7eb;
+        }
+        body.dark-mode .card:hover { border-color: #60a5fa; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+        body.dark-mode .card p,
+        body.dark-mode .list-item,
+        body.dark-mode .notice-content,
+        body.dark-mode footer,
+        body.dark-mode p,
+        body.dark-mode div[style*="color:#666"],
+        body.dark-mode div[style*="color: #666"],
+        body.dark-mode div[style*="color:#555"],
+        body.dark-mode div[style*="color: #555"] { color: #cbd5e1 !important; }
+        body.dark-mode .notice-content { background: #1f2937; }
+        body.dark-mode .list-item { border-bottom-color: #334155; }
+        body.dark-mode .input-form { background: #0f172a; }
+        body.dark-mode .input-form input[type="text"],
+        body.dark-mode .input-form textarea,
+        body.dark-mode #resourceExternalLink {
+            background-color: #020617;
+            color: #e5e7eb;
+            border-color: #475569;
+        }
+        body.dark-mode .input-form input::placeholder,
+        body.dark-mode .input-form textarea::placeholder { color: #94a3b8; }
+        body.dark-mode .drop-zone { background-color: #020617; border-color: #475569; color: #cbd5e1; }
+        body.dark-mode .drop-zone:hover,
+        body.dark-mode .drop-zone.dragover,
+        body.dark-mode .drop-zone.has-file { background-color: #1e293b; border-color: #60a5fa; color: #93c5fd; }
+        body.dark-mode .summary-table th { background-color: #1e293b; color: #e5e7eb; }
+        body.dark-mode .summary-table td { color: #e5e7eb; }
+        body.dark-mode .summary-table th,
+        body.dark-mode .summary-table td { border-color: #334155; }
+        body.dark-mode .summary-table tr:nth-child(even) { background-color: #0f172a; }
+        body.dark-mode .accordion-header { background-color: #1e293b; color: #e5e7eb; }
+        body.dark-mode .accordion-header:hover,
+        body.dark-mode .accordion-item.active .accordion-header { background-color: #334155; }
+        body.dark-mode .btn-mini { background: #1f2937; color: #e5e7eb; border-color: #475569; }
+        body.dark-mode .btn-mini:hover { background: #334155; }
+        body.dark-mode .status-tag { background: #1e3a8a; color: #bfdbfe; }
+        body.dark-mode .side-content section[style*="background-color: #fffaf0"] { background-color: #1f2937 !important; border-color: #92400e !important; }
+        body.dark-mode .btn-sheet { background-color: #15803d; }
+
     </style>
 </head>
 <body>
@@ -118,6 +199,7 @@
         정밀도로지도 구축·갱신(6지구) 프로젝트 관리
     </h1>
     <div style="display: flex; align-items: center; gap: 20px;">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleDarkMode()">🌙 다크모드</button>
         <a href="https://docs.google.com/spreadsheets/d/1quV3cXz-zsKZfZYPrrCi0ZIbHVGWBy5fav4YGuBw9Gg/edit?gid=0#gid=0" 
            target="_blank" 
            class="btn-sheet">
@@ -553,6 +635,43 @@
     }
 
     renderLists();
+
+
+    // ==========================================
+    // 🌙 다크모드 / 라이트모드 전환 로직
+    // - 모든 페이지에서 동일한 LocalStorage 키 사용
+    // - 저장 키: hdmap_theme = 'dark' 또는 'light'
+    // ==========================================
+    (function initThemeMode() {
+        const THEME_KEY = 'hdmap_theme';
+
+        function applyTheme(theme) {
+            const isDark = theme === 'dark';
+            document.body.classList.toggle('dark-mode', isDark);
+
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                btn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
+                btn.setAttribute('aria-label', isDark ? '라이트모드로 전환' : '다크모드로 전환');
+                btn.title = isDark ? '라이트모드로 전환' : '다크모드로 전환';
+            }
+        }
+
+        window.toggleDarkMode = function() {
+            const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(THEME_KEY, nextTheme);
+            applyTheme(nextTheme);
+        };
+
+        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => applyTheme(savedTheme));
+        } else {
+            applyTheme(savedTheme);
+        }
+    })();
+
 </script>
 
 </body>
