@@ -25,12 +25,11 @@
             padding: 0.8rem 5%; display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        header h1 { 
-            margin: 0; font-size: 1.3rem; letter-spacing: -0.5px; 
-            display: flex; align-items: center; gap: 12px;
-        }
+        header h1 { margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 12px; }
         .header-logo { height: 32px; width: auto; }
-        .system-status { font-size: 0.9rem; opacity: 0.8; }
+        
+        .btn-sheet { background-color: #27ae60; color: white; text-decoration: none; padding: 7px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: background-color 0.2s; }
+        .btn-sheet:hover { background-color: #219150; }
 
         .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
 
@@ -38,75 +37,36 @@
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         h2 { margin: 0; font-size: 1.1rem; border-left: 4px solid var(--accent-color); padding-left: 10px; color: var(--primary-color); }
 
-        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-        .card { 
-            border: 1px solid var(--border-color); border-radius: 6px; padding: 1.2rem;
-            transition: all 0.2s; cursor: pointer; text-decoration: none; color: inherit; display: block;
-        }
+        .card { border: 1px solid var(--border-color); border-radius: 6px; padding: 1.2rem; transition: all 0.2s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
         .card:hover { border-color: var(--accent-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
         .card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--accent-color); }
-        .card p { margin: 0; font-size: 0.85rem; color: #666; }
         .status-tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 10px; background: #e1f5fe; color: #0288d1; }
 
         .list-group { list-style: none; padding: 0; margin: 0; }
-        .list-item { 
-            padding: 12px 0; border-bottom: 1px solid #f1f2f6; font-size: 0.9rem;
-        }
-        .list-item:last-child { border-bottom: none; }
+        .list-item { padding: 12px 0; border-bottom: 1px solid #f1f2f6; font-size: 0.9rem; }
         .notice-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .notice-content { display: none; padding: 10px; margin-top: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; color: #555; white-space: pre-wrap; }
         
         .btn-add { padding: 6px 12px; font-size: 0.8rem; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-del { font-size: 0.75rem; color: #e74c3c; cursor: pointer; border: none; background: none; font-weight: bold; }
         .btn-mini { font-size: 0.75rem; padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; color: #333; text-decoration: none; background: #fff; cursor: pointer; }
-        .btn-mini:hover { background: #f4f4f4; }
 
         .input-form { display: none; margin-bottom: 20px; padding: 15px; background: #fdfdfd; border-radius: 6px; border: 2px dashed var(--accent-color); }
-        .input-form input[type="text"], .input-form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; font-family: inherit; }
-        .input-form textarea { height: 100px; resize: none; }
-        .form-actions { text-align: right; gap: 10px; display: flex; justify-content: flex-end; }
-
-        .drop-zone { border: 2px dashed #bbb; border-radius: 6px; padding: 25px 15px; text-align: center; color: #777; cursor: pointer; margin-bottom: 15px; transition: all 0.2s ease; background-color: #fff; font-size: 0.85rem; }
-        .drop-zone:hover, .drop-zone.dragover { background-color: #f4f9fd; border-color: var(--accent-color); color: var(--primary-color); }
-        .drop-zone.has-file { background-color: #e8f4fd; border-color: var(--accent-color); color: var(--accent-color); font-weight: bold; }
-        .drop-zone input[type="file"] { display: none; }
-
-        /* 🌟 [신규 추가] 차트 및 표 관련 CSS 스타일 */
-        .chart-container { position: relative; width: 100%; margin-bottom: 15px; background: white; }
+        .input-form input[type="text"], .input-form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
         
+        .drop-zone { border: 2px dashed #bbb; border-radius: 6px; padding: 20px; text-align: center; color: #777; cursor: pointer; background-color: #fff; font-size: 0.85rem; }
+        .drop-zone.dragover { background-color: #f4f9fd; border-color: var(--accent-color); }
+        .drop-zone.has-file { background-color: #e8f4fd; color: var(--accent-color); font-weight: bold; }
+
+        .chart-container { position: relative; width: 100%; margin-bottom: 15px; }
         .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85rem; }
-        .summary-table th, .summary-table td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-break: keep-all; }
-        .summary-table th { background-color: #f0f4f8; color: var(--text-color); font-weight: 600; }
-        .summary-table tr:nth-child(even) { background-color: #fafbfc; }
-        
-        .accordion-item { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
-        .accordion-header { background-color: #f8f9fa; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.95rem; color: var(--primary-color); transition: background-color 0.2s; }
-        .accordion-header:hover { background-color: #edf2f7; }
-        .accordion-item.active .accordion-header { background-color: #e2e8f0; border-bottom: 1px solid var(--border-color); }
-        .accordion-header::after { content: '▼'; font-size: 10px; transition: transform 0.3s; }
-        .accordion-item.active .accordion-header::after { transform: rotate(180deg); }
+        .summary-table th, .summary-table td { border: 1px solid var(--border-color); padding: 8px; text-align: center; }
+        .accordion-item { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        .accordion-header { background: #f8f9fa; padding: 12px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
         .accordion-content { display: none; padding: 15px; background: #fff; overflow-x: auto; }
         .accordion-item.active .accordion-content { display: block; }
 
         footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: #999; }
-        /* 🌟 [신규 추가] 구글 시트 바로가기 버튼 스타일 */
-        .btn-sheet {
-            background-color: #27ae60; 
-            color: white; 
-            text-decoration: none; 
-            padding: 7px 14px; 
-            border-radius: 4px; 
-            font-size: 0.85rem; 
-            font-weight: bold; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-            transition: background-color 0.2s;
-        }
-        .btn-sheet:hover {
-            background-color: #219150;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 <body>
@@ -117,56 +77,39 @@
         정밀도로지도 구축·갱신(6지구) 프로젝트 관리
     </h1>
     <div style="display: flex; align-items: center; gap: 20px;">
-        <a href="https://docs.google.com/spreadsheets/d/1quV3cXz-zsKZfZYPrrCi0ZIbHVGWBy5fav4YGuBw9Gg/edit?gid=0#gid=0" 
-           target="_blank" 
-           class="btn-sheet">
-           📊 데이터 시트
-        </a>
-        <div class="system-status" id="current-time"></div>
+        <a href="https://docs.google.com/spreadsheets/d/1quV3cXz-zsKZfZYPrrCi0ZIbHVGWBy5fav4YGuBw9Gg/edit?gid=0#gid=0" target="_blank" class="btn-sheet">📊 데이터 시트</a>
+        <div id="current-time" style="font-size: 0.9rem; opacity: 0.8;"></div>
     </div>
 </header>
 
 <div class="container">
     <div class="main-content">
         <section>
-            <div class="section-header">
-                <h2>활성 프로젝트 대시보드 바로가기</h2>
-            </div>
-            <div class="dashboard-grid">
+            <h2>활성 프로젝트 대시보드</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <a href="dashboard.html" class="card">
                     <span class="status-tag">진행 중</span>
-                    <h3>'26년도 정밀도로지도 제작 (지도 모드)</h3>
-                    <p>6지구 공간정보 시각화 및 필터링 대시보드로 이동합니다.</p>
+                    <h3>'26년도 정밀도로지도 제작 (지도)</h3>
+                    <p>6지구 실시간 공정 관리 및 필터링 시스템</p>
                 </a>
                 <a href="errors.html" class="card">
                     <span class="status-tag" style="background:#fff3e0; color:#e65100;">필독</span>
                     <h3>주요 오류사례 가이드</h3>
-                    <p>검수 과정에서 빈번히 발생하는 부적합 사례 및 조치 방법 안내</p>
+                    <p>부적합 사례 및 조치 방법 데이터베이스</p>
                 </a>
             </div>
         </section>
 
         <section>
-            <div class="section-header">
-                <h2>📈 전체 사업 검사 현황 요약</h2>
-            </div>
-            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-bottom:5px;">■ 전체 검사 비율 (구축연장 기준)</div>
-            <div class="chart-container" style="height: 200px;">
-                <canvas id="inspectChart"></canvas>
-            </div>
-            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-top:30px; margin-bottom:5px;">■ DB 담당 업체별 현황 (구축연장 기준)</div>
-            <div class="chart-container" style="height: 250px;">
-                <canvas id="companyInspectChart"></canvas>
-            </div>
+            <h2>📈 전체 사업 검사 현황 요약 (구축연장 기준)</h2>
+            <div class="chart-container" style="height: 200px;"><canvas id="inspectChart"></canvas></div>
+            <div style="margin-top:30px;" class="chart-container" style="height: 250px;"><canvas id="companyInspectChart"></canvas></div>
         </section>
 
         <section id="summary-section">
-            <h2 style="margin-bottom: 15px;">📊 사업 총괄 현황 (표)</h2>
-            <div id="summary-content" style="text-align:center; color:#999; font-size:0.9rem; padding:20px;">
-                서버에서 총괄 데이터를 불러오는 중입니다...
-            </div>
+            <h2>📊 사업 총괄 현황 (표)</h2>
+            <div id="summary-content">데이터 로딩 중...</div>
         </section>
-
     </div>
 
     <div class="side-content">
@@ -175,16 +118,11 @@
                 <h2>사업 주요 공지사항</h2>
                 <button class="btn-add" onclick="toggleForm('noticeForm')">+ 공지 쓰기</button>
             </div>
-            
             <div id="noticeForm" class="input-form">
-                <input type="text" id="noticeTitle" placeholder="공지 제목을 입력하세요">
-                <textarea id="noticeContent" placeholder="상세 내용을 입력하세요..."></textarea>
-                <div class="form-actions">
-                    <button class="btn-mini" onclick="cancelNotice()">취소</button>
-                    <button class="btn-add" onclick="addItem('notice')">등록하기</button>
-                </div>
+                <input type="text" id="noticeTitle" placeholder="공지 제목">
+                <textarea id="noticeContent" style="height:100px; resize:none;" placeholder="상세 내용"></textarea>
+                <div style="text-align:right;"><button class="btn-mini" onclick="cancelNotice()">취소</button> <button class="btn-add" onclick="addItem('notice')">등록</button></div>
             </div>
-
             <ul class="list-group" id="noticeList"></ul>
         </section>
 
@@ -193,367 +131,158 @@
                 <h2>실무 자료실</h2>
                 <button class="btn-add" onclick="toggleForm('resourceForm')">+ 자료 등록</button>
             </div>
-
             <div id="resourceForm" class="input-form">
-                <input type="text" id="resourceName" placeholder="자료 명칭을 입력하세요">
-                
-                <div id="dropZone" class="drop-zone">
-                    <span id="dropZoneText">📁 이곳으로 파일을 드래그하거나 클릭해서 선택하세요</span>
-                    <input type="file" id="resourceFile">
+                <input type="text" id="resourceName" placeholder="자료 명칭">
+                <div style="background: #f0f7ff; padding: 12px; border-radius: 6px; border: 1px solid #cce5ff; margin-bottom: 10px;">
+                    <input type="text" id="resourceExternalLink" placeholder="🔗 옵션 1. 대용량 링크 (구글 드라이브 등)">
+                    <div style="text-align:center; font-size:0.75rem; color:#666; margin:5px 0;">또는</div>
+                    <div id="dropZone" class="drop-zone">
+                        <span id="dropZoneText">📁 옵션 2. 소용량 파일 드래그</span>
+                        <input type="file" id="resourceFile" style="display:none;">
+                    </div>
                 </div>
-
-                <div class="form-actions">
-                    <button class="btn-mini" onclick="cancelResource()">취소</button>
-                    <button class="btn-add" onclick="addItem('resource')">업로드</button>
-                </div>
+                <div style="text-align:right;"><button class="btn-mini" onclick="cancelResource()">취소</button> <button class="btn-add" onclick="addItem('resource')">등록</button></div>
             </div>
-
             <ul class="list-group" id="resourceList"></ul>
         </section>
     </div>
 </div>
 
-<footer>
-    &copy; 2026 정밀도로지도 프로젝트 관리 시스템 | 기술 문의: GIS 개발팀
-</footer>
-
 <script>
-    // 1. 시간 표시
-    function updateClock() {
-        const now = new Date();
-        const formatted = now.getFullYear() + "-" + (now.getMonth()+1).toString().padStart(2,'0') + "-" + now.getDate().toString().padStart(2,'0') + " " + 
-                          now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-        document.getElementById('current-time').textContent = "Server Time: " + formatted;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // ==========================================
-    // 🌟 [신규 추가] 구글 시트 데이터 로드 및 차트/표 렌더링 로직
-    // ==========================================
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyC1CaeKeqwJ9g_RVZHmZ4uOdpmJETrnQWv12wfcavpQY0yW406s4tNcVkDfkbvXVA4/exec'; 
-
-    async function fetchDashboardSummary() {
-        try {
-            const response = await fetch(GAS_URL, { redirect: "follow" });
-            const data = await response.json();
-            
-            // 차트 렌더링
-            renderCharts(data.sectionData);
-            
-            // 표 렌더링
-            renderSummaryTable(data.summaryData, data.deliveryStatus);
-        } catch (error) {
-            console.error("데이터 갱신 실패:", error);
-            document.getElementById('summary-content').innerHTML = '<div style="color:#e74c3c; padding:20px;">데이터를 불러오는 데 실패했습니다. 통신 상태를 확인하세요.</div>';
-        }
-    }
-
-    function renderCharts(sectionData) {
-        let inspectLengths = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
-        let companyStats = {};
-
-        for (let id in sectionData) {
-            let item = sectionData[id];
-            let ins = item.inspect || "";
-            let comp = (item.dbCompany || "").trim();
-            // 🌟 [수정] 구간 수가 아닌 연장(length) 데이터를 가져옵니다. 빈값이면 0으로 처리.
-            let len = parseFloat(item.length) || 0; 
-
-            let statusKey = '미진행';
-            if (ins.includes('적합') && !ins.includes('부적합')) statusKey = '적합';
-            else if (ins.includes('부적합')) statusKey = '부적합';
-            else if (ins.includes('검수의뢰')) statusKey = '검수의뢰';
-            else if (ins.includes('반려')) statusKey = '반려';
-
-            // 🌟 [수정] 1씩 더하는 대신 연장(km)을 누적해서 더합니다.
-            inspectLengths[statusKey] += len; 
-
-            if (comp !== "") {
-                if (!companyStats[comp]) companyStats[comp] = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
-                // 🌟 [수정] 업체별 데이터에도 연장(km)을 누적해서 더합니다.
-                companyStats[comp][statusKey] += len;
-            }
-        }
-
-        // 1번 차트: 전체 검사 현황 도넛 차트
-        const ctxInspect = document.getElementById('inspectChart').getContext('2d');
-        new Chart(ctxInspect, {
-            type: 'doughnut',
-            data: {
-                labels: ['적합', '검수의뢰', '반려', '부적합', '미진행'],
-                datasets: [{ 
-                    // 🌟 [수정] 소수점 1자리(toFixed(1))까지만 깔끔하게 표시
-                    data: [
-                        inspectLengths['적합'].toFixed(1), 
-                        inspectLengths['검수의뢰'].toFixed(1), 
-                        inspectLengths['반려'].toFixed(1), 
-                        inspectLengths['부적합'].toFixed(1), 
-                        inspectLengths['미진행'].toFixed(1)
-                    ], 
-                    backgroundColor: ['#32CD32', '#1a73e8', '#f39c12', '#e74c3c', '#e0e0e0'], 
-                    borderWidth: 0, hoverOffset: 4 
-                }]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, cutout: '50%', 
-                plugins: { 
-                    legend: { position: 'right', labels: { font: { family: 'Pretendard' } } },
-                    // 🌟 [추가] 마우스를 올렸을 때 툴팁에 'km' 단위가 붙도록 설정
-                    tooltip: { callbacks: { label: function(context) { return ' ' + context.label + ': ' + context.raw + ' km'; } } }
-                } 
-            }
-        });
-
-        // 2번 차트: 업체별 검사 현황 누적 막대 차트
-        const ctxCompany = document.getElementById('companyInspectChart').getContext('2d');
-        const compLabels = Object.keys(companyStats).sort();
-        new Chart(ctxCompany, {
-            type: 'bar',
-            data: {
-                labels: compLabels,
-                datasets: [
-                    // 🌟 [수정] 소수점 1자리(toFixed(1))까지만 깔끔하게 표시
-                    { label: '적합', data: compLabels.map(c => companyStats[c]['적합'].toFixed(1)), backgroundColor: '#32CD32' },
-                    { label: '검수의뢰', data: compLabels.map(c => companyStats[c]['검수의뢰'].toFixed(1)), backgroundColor: '#1a73e8' },
-                    { label: '반려', data: compLabels.map(c => companyStats[c]['반려'].toFixed(1)), backgroundColor: '#f39c12' },
-                    { label: '부적합', data: compLabels.map(c => companyStats[c]['부적합'].toFixed(1)), backgroundColor: '#e74c3c' },
-                    { label: '미진행', data: compLabels.map(c => companyStats[c]['미진행'].toFixed(1)), backgroundColor: '#e0e0e0' }
-                ]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                scales: { x: { stacked: true }, y: { stacked: true } }, 
-                plugins: { 
-                    legend: { position: 'bottom', labels: { font: { family: 'Pretendard' } } },
-                    // 🌟 [추가] 마우스를 올렸을 때 툴팁에 'km' 단위가 붙도록 설정
-                    tooltip: { callbacks: { label: function(context) { return ' ' + context.dataset.label + ': ' + context.raw + ' km'; } } }
-                } 
-            }
-        });
-    }
-
-    function renderSummaryTable(summaryData, deliveryData) {
-        const container = document.getElementById('summary-content');
-        if (!summaryData) return;
-        container.innerHTML = ''; // 로딩 메시지 삭제
-
-        if (summaryData.monthly && summaryData.monthly.length > 0) {
-            const monthlyItem = document.createElement('div'); monthlyItem.className = 'accordion-item active'; 
-            let html = `<div class="accordion-header">🔹 월별 제출 물량</div><div class="accordion-content"><table class="summary-table"><thead><tr><th>납품월</th><th>날짜</th><th>연장</th><th>물량</th></tr></thead><tbody>`;
-            let currentMonth = "";
-            for (let i = 0; i < summaryData.monthly.length; i++) {
-                let row = summaryData.monthly[i];
-                let len = (row.length !== "" && !isNaN(row.length)) ? Number(row.length).toFixed(2) : (row.length || "-");
-                let amt = (row.amount !== "" && !isNaN(row.amount)) ? Number(row.amount).toFixed(2) : (row.amount || "-");
-                if (row.month === "총계" || row.month === "총 계") { html += `<tr style="background:#ffebee; font-weight:bold;"><td colspan="2">총 계</td><td>${len}</td><td>${amt}</td></tr>`; } 
-                else if (row.month !== currentMonth && row.month !== "") {
-                    currentMonth = row.month; let rCount = summaryData.monthly.filter(x => x.month === currentMonth).length;
-                    html += `<tr><td rowspan="${rCount}" style="background:#f9f9f9; font-weight:bold;">${currentMonth}</td><td>${row.date}</td><td>${len}</td><td rowspan="${rCount}" style="color:#1a73e8; font-weight:bold;">${amt}</td></tr>`;
-                } else { html += `<tr><td>${row.date}</td><td>${len}</td></tr>`; }
-            }
-            monthlyItem.innerHTML = html + `</tbody></table></div>`; container.appendChild(monthlyItem);
-        }
-
-        if (summaryData.company && summaryData.company.length > 0) {
-            const companyItem = document.createElement('div'); companyItem.className = 'accordion-item'; 
-            let html = `<div class="accordion-header">🔹 공정별 업체 현황</div><div class="accordion-content">`;
-            let isTableOpen = false;
-            for (let i = 0; i < summaryData.company.length; i++) {
-                let row = summaryData.company[i];
-                let c1 = row.col1, c2 = (row.col2 !== "" && !isNaN(row.col2)) ? Number(row.col2).toFixed(2) : (row.col2 || "-");
-                let c3 = (row.col3 !== "" && !isNaN(row.col3)) ? Number(row.col3).toFixed(2) : (row.col3 || "-"), c4_raw = row.col4;
-                if (c1 !== "" && row.col2 === "" && row.col3 === "" && row.col4 === "") {
-                    if (isTableOpen) { html += `</tbody></table>`; isTableOpen = false; }
-                    html += `<div style="font-size:12px; font-weight:bold; color:#d35400; margin: 10px 0 5px 0;">📍 ${c1}</div>`;
-                } else if (c1 === "담당업체" || c1 === "업체명") {
-                    if (isTableOpen) { html += `</tbody></table>`; }
-                    html += `<table class="summary-table"><thead><tr><th>${c1}</th><th>담당물량</th><th>완료물량</th><th>비율</th></tr></thead><tbody>`; isTableOpen = true;
-                } else {
-                    if (!isTableOpen) { html += `<table class="summary-table"><tbody>`; isTableOpen = true; }
-                    let rowStyle = (c1.includes("합계") || c1.includes("총계")) ? `style="background:#ffebee; font-weight:bold;"` : "";
-                    let c4Html = (!isNaN(c4_raw) && c4_raw !== "") ? `<span style="color:#1a73e8; font-weight:bold;">${(Number(c4_raw)*100).toFixed(2)}%</span>` : (c4_raw || "-");
-                    html += `<tr ${rowStyle}><td>${c1}</td><td>${c2}</td><td>${c3}</td><td>${c4Html}</td></tr>`;
-                }
-            }
-            companyItem.innerHTML = html + (isTableOpen ? `</tbody></table>` : "") + `</div>`; container.appendChild(companyItem);
-        }
-
-        if (deliveryData && deliveryData.length > 0) {
-            const deliveryItem = document.createElement('div'); deliveryItem.className = 'accordion-item'; 
-            let html = `<div class="accordion-header">📦 납품월별 업체 현황</div><div class="accordion-content"><table class="summary-table"><thead><tr><th>월</th><th>업체</th><th>연장</th><th>물량</th></tr></thead><tbody>`;
-            let curMonth = "";
-            deliveryData.forEach(row => {
-                let len = (row.length === 0 || row.length === "") ? "-" : (!isNaN(row.length) ? Number(row.length).toFixed(2) : row.length);
-                let amt = (row.amount === 0 || row.amount === "") ? "-" : (!isNaN(row.amount) ? Number(row.amount).toFixed(2) : row.amount);
-                if (row.month !== curMonth) {
-                    curMonth = row.month; let rCount = deliveryData.filter(x => x.month === curMonth).length;
-                    html += `<tr style="border-top: 2px solid #ccc;"><td rowspan="${rCount}" style="background:#f0f7ff; font-weight:bold; color:#0056b3;">${curMonth}</td><td>${row.company}</td><td>${len}</td><td>${amt}</td></tr>`;
-                } else { html += `<tr><td>${row.company}</td><td>${len}</td><td>${amt}</td></tr>`; }
-            });
-            deliveryItem.innerHTML = html + `</tbody></table></div>`; container.appendChild(deliveryItem);
-        }
-
-        // 아코디언 열기/닫기 이벤트 연결
-        container.querySelectorAll('.accordion-header').forEach(h => { 
-            h.onclick = function() { this.parentElement.classList.toggle('active'); }; 
-        });
-    }
-
-    // 서버에 데이터 요청 시작!
-    fetchDashboardSummary();
-
-
-    // ==========================================
-    // 3. 로컬 스토리지 (공지/자료) 관리 로직
-    // ==========================================
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyC1CaeKeqwJ9g_RVZHmZ4uOdpmJETrnQWv12wfcavpQY0yW406s4tNcVkDfkbvXVA4/exec';
     let notices = JSON.parse(localStorage.getItem('notices')) || [];
     let resources = JSON.parse(localStorage.getItem('resources')) || [];
 
-    function toggleForm(id) {
-        const form = document.getElementById(id);
-        form.style.display = (form.style.display === 'block') ? 'none' : 'block';
+    // 시간 업데이트
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = "Server Time: " + now.getFullYear() + "-" + (now.getMonth()+1).toString().padStart(2,'0') + "-" + now.getDate().toString().padStart(2,'0') + " " + now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
     }
+    setInterval(updateClock, 1000); updateClock();
 
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('resourceFile');
-    const dropZoneText = document.getElementById('dropZoneText');
+    // 폼 토글
+    function toggleForm(id) { const f = document.getElementById(id); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; }
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', function() { updateDropZoneUI(this.files); });
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault(); dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files; 
-            updateDropZoneUI(e.dataTransfer.files);
-        }
-    });
+    // 드롭존 설정
+    const dz = document.getElementById('dropZone');
+    const fi = document.getElementById('resourceFile');
+    const dzt = document.getElementById('dropZoneText');
+    const extLink = document.getElementById('resourceExternalLink');
+    dz.onclick = () => fi.click();
+    fi.onchange = (e) => { dzt.innerHTML = `✅ <b>${e.target.files[0].name}</b>`; dz.classList.add('has-file'); extLink.value=""; };
+    dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('dragover'); };
+    dz.ondragleave = () => dz.classList.remove('dragover');
+    dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove('dragover'); fi.files = e.dataTransfer.files; dzt.innerHTML = `✅ <b>${fi.files[0].name}</b>`; dz.classList.add('has-file'); extLink.value=""; };
 
-    function updateDropZoneUI(files) {
-        if (files && files.length > 0) {
-            dropZoneText.innerHTML = `✅ 선택된 파일: <b>${files[0].name}</b>`;
-            dropZone.classList.add('has-file');
-        } else {
-            resetDropZoneUI();
-        }
-    }
+    function cancelNotice() { document.getElementById('noticeTitle').value=''; document.getElementById('noticeContent').value=''; toggleForm('noticeForm'); }
+    function cancelResource() { document.getElementById('resourceName').value=''; dzt.innerHTML='📁 옵션 2. 소용량 파일 드래그'; dz.classList.remove('has-file'); extLink.value=""; toggleForm('resourceForm'); }
 
-    function resetDropZoneUI() {
-        dropZoneText.innerHTML = '📁 이곳으로 파일을 드래그하거나 클릭해서 선택하세요';
-        dropZone.classList.remove('has-file');
-        fileInput.value = '';
-    }
-
-    function cancelNotice() {
-        document.getElementById('noticeTitle').value = '';
-        document.getElementById('noticeContent').value = '';
-        toggleForm('noticeForm');
-    }
-
-    function cancelResource() {
-        document.getElementById('resourceName').value = '';
-        resetDropZoneUI();
-        toggleForm('resourceForm');
-    }
-
+    // 데이터 추가 (링크/파일 대응)
     function addItem(type) {
         if (type === 'notice') {
-            const title = document.getElementById('noticeTitle').value;
-            const content = document.getElementById('noticeContent').value;
-            if (!title || !content) return alert("제목과 내용을 모두 입력하세요.");
-            
-            const date = new Date().toISOString().split('T')[0];
-            notices.unshift({ title, content, date, id: Date.now() });
+            const t = document.getElementById('noticeTitle').value;
+            const c = document.getElementById('noticeContent').value;
+            if(!t || !c) return alert("내용을 입력하세요.");
+            notices.unshift({ title: t, content: c, date: new Date().toISOString().split('T')[0], id: Date.now() });
             localStorage.setItem('notices', JSON.stringify(notices));
-            
             cancelNotice();
-            renderLists();
         } else {
-            const name = document.getElementById('resourceName').value;
-            const file = fileInput.files[0];
+            const n = document.getElementById('resourceName').value;
+            const link = extLink.value.trim();
+            const file = fi.files[0];
+            if(!n || (!link && !file)) return alert("명칭과 파일(또는 링크)을 확인하세요.");
 
-            if (!name || !file) return alert("자료 명칭과 파일을 선택하세요.");
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const fileData = e.target.result; 
-                resources.unshift({ name, fileName: file.name, fileData, id: Date.now() });
+            if(link) {
+                resources.unshift({ name: n, externalLink: link, id: Date.now() });
                 localStorage.setItem('resources', JSON.stringify(resources));
-                
-                cancelResource();
-                renderLists();
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    // 🌟 [추가] 관리자 전용 삭제 기능 (비밀번호 보호)
-    function deleteItem(type, id) {
-        // 1. 여기서 원하시는 관리자 비밀번호를 설정하세요 (현재 '1234')
-        const adminPassword = "1234"; 
-        
-        // 2. 삭제 버튼 클릭 시 비밀번호 입력창 띄우기
-        const inputPwd = prompt("삭제 권한이 필요합니다. 관리자 비밀번호를 입력하세요:");
-        
-        // 3. 취소 버튼을 누르거나 비밀번호가 틀렸을 때의 처리
-        if (inputPwd === null) return; // 취소 누름
-        if (inputPwd !== adminPassword) {
-            alert("🚨 비밀번호가 일치하지 않아 삭제할 수 없습니다.");
-            return;
-        }
-
-        // 4. 비밀번호가 맞았을 때만 실제 삭제 진행
-        if (!confirm("정말 이 항목을 삭제하시겠습니까?")) return;
-        
-        if (type === 'notice') {
-            notices = notices.filter(n => n.id !== id);
-            localStorage.setItem('notices', JSON.stringify(notices));
-        } else {
-            resources = resources.filter(r => r.id !== id);
-            localStorage.setItem('resources', JSON.stringify(resources));
+                cancelResource(); renderLists();
+            } else {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    resources.unshift({ name: n, fileName: file.name, fileData: e.target.result, id: Date.now() });
+                    localStorage.setItem('resources', JSON.stringify(resources));
+                    cancelResource(); renderLists();
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
         }
         renderLists();
     }
 
-    function toggleNotice(id) {
-        const contentDiv = document.getElementById('content-' + id);
-        contentDiv.style.display = (contentDiv.style.display === 'block') ? 'none' : 'block';
+    // 관리자 삭제 기능
+    function deleteItem(type, id) {
+        const pwd = prompt("관리자 비밀번호를 입력하세요:");
+        if (pwd !== "1234") return alert("비밀번호가 틀렸습니다.");
+        if (!confirm("삭제하시겠습니까?")) return;
+        if (type === 'notice') notices = notices.filter(x => x.id !== id);
+        else resources = resources.filter(x => x.id !== id);
+        localStorage.setItem(type === 'notice' ? 'notices' : 'resources', JSON.stringify(type === 'notice' ? notices : resources));
+        renderLists();
     }
 
+    // 목록 렌더링 (미리보기 제거, 다운로드 버튼만 표시)
     function renderLists() {
-        const noticeList = document.getElementById('noticeList');
-        noticeList.innerHTML = notices.map(n => `
+        document.getElementById('noticeList').innerHTML = notices.map(n => `
             <li class="list-item">
-                <div class="notice-header" onclick="toggleNotice(${n.id})">
-                    <span style="font-weight:bold; color:var(--primary-color)">${n.title}</span>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="color:#999; font-size: 0.8rem;">${n.date}</span>
-                        <button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', ${n.id})">지우기</button>
-                    </div>
+                <div class="notice-header" onclick="document.getElementById('c-${n.id}').style.display = (document.getElementById('c-${n.id}').style.display==='block'?'none':'block')">
+                    <b>${n.title}</b>
+                    <div><span style="font-size:0.8rem; color:#999;">${n.date}</span> <button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', ${n.id})">삭제</button></div>
                 </div>
-                <div id="content-${n.id}" class="notice-content">${n.content}</div>
+                <div id="c-${n.id}" class="notice-content">${n.content}</div>
             </li>
         `).join('');
 
-        const resourceList = document.getElementById('resourceList');
-        resourceList.innerHTML = resources.map(r => `
+        document.getElementById('resourceList').innerHTML = resources.map(r => `
             <li class="list-item" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="flex:1">
-                    <span style="display:block; font-weight:bold;">${r.name}</span>
-                    <span style="font-size:0.75rem; color:#888;">파일명: ${r.fileName}</span>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <a href="${r.fileData}" download="${r.fileName}" class="btn-mini">다운로드</a>
-                    <button class="btn-del" onclick="deleteItem('resource', ${r.id})">지우기</button>
+                <div style="flex:1"><b>${r.name}</b>${r.fileName ? `<br><small style="color:#888;">${r.fileName}</small>` : ''}</div>
+                <div style="display:flex; gap:5px;">
+                    ${r.externalLink 
+                        ? `<a href="${r.externalLink}" target="_blank" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">보기</a>` 
+                        : `<a href="${r.fileData}" download="${r.fileName}" class="btn-mini">다운로드</a>`}
+                    <button class="btn-del" onclick="deleteItem('resource', ${r.id})">삭제</button>
                 </div>
             </li>
         `).join('');
     }
 
-    renderLists();
-</script>
+    // 서버 데이터 로드 (차트/표)
+    async function loadData() {
+        const res = await fetch(GAS_URL, { redirect: "follow" });
+        const data = await res.json();
+        
+        // 차트 그리기 (연장 기준)
+        let insLen = { '적합':0, '검수의뢰':0, '반려':0, '부적합':0, '미진행':0 };
+        let compStats = {};
+        for (let id in data.sectionData) {
+            let item = data.sectionData[id];
+            let len = parseFloat(item.length) || 0;
+            let status = item.inspect.includes('적합') && !item.inspect.includes('부적합') ? '적합' : (item.inspect.includes('부적합')?'부적합':(item.inspect.includes('검수의뢰')?'검수의뢰':(item.inspect.includes('반려')?'반려':'미진행')));
+            insLen[status] += len;
+            let cp = (item.dbCompany||"미지정").trim();
+            if(!compStats[cp]) compStats[cp] = { '적합':0,'검수의뢰':0,'반려':0,'부적합':0,'미진행':0 };
+            compStats[cp][status] += len;
+        }
 
+        new Chart(document.getElementById('inspectChart'), { type: 'doughnut', data: { labels: ['적합','검수의뢰','반려','부적합','미진행'], datasets: [{ data: Object.values(insLen).map(v=>v.toFixed(1)), backgroundColor: ['#32CD32','#1a73e8','#f39c12','#e74c3c','#e0e0e0'] }] }, options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position:'right' } } } });
+        
+        const cLabels = Object.keys(compStats).sort();
+        new Chart(document.getElementById('companyInspectChart'), { type:'bar', data: { labels: cLabels, datasets: ['적합','검수의뢰','반려','부적합','미진행'].map((s,i)=>({ label:s, data:cLabels.map(c=>compStats[c][s].toFixed(1)), backgroundColor:['#32CD32','#1a73e8','#f39c12','#e74c3c','#e0e0e0'][i] })) }, options: { responsive:true, maintainAspectRatio:false, scales:{x:{stacked:true},y:{stacked:true}} } });
+
+        // 표 그리기
+        const sc = document.getElementById('summary-content'); sc.innerHTML = '';
+        if(data.summaryData.monthly) {
+            const div = document.createElement('div'); div.className='accordion-item active'; div.innerHTML=`<div class="accordion-header">🔹 월별 제출 현황</div><div class="accordion-content"><table class="summary-table"><thead><tr><th>월</th><th>날짜</th><th>연장(km)</th></tr></thead><tbody>${data.summaryData.monthly.map(m=>`<tr><td>${m.month}</td><td>${m.date}</td><td>${m.length}</td></tr>`).join('')}</tbody></table></div>`;
+            sc.appendChild(div);
+        }
+        if(data.summaryData.company) {
+            const div = document.createElement('div'); div.className='accordion-item'; div.innerHTML=`<div class="accordion-header">🔹 공정별 업체 현황</div><div class="accordion-content"><table class="summary-table"><tbody>${data.summaryData.company.map(c=>`<tr><td>${c.col1}</td><td>${c.col2}</td><td>${c.col3}</td><td>${c.col4}</td></tr>`).join('')}</tbody></table></div>`;
+            sc.appendChild(div);
+        }
+        sc.querySelectorAll('.accordion-header').forEach(h=>h.onclick=()=>h.parentElement.classList.toggle('active'));
+    }
+
+    renderLists(); loadData();
+</script>
 </body>
 </html>
