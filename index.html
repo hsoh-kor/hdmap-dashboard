@@ -89,6 +89,24 @@
         .accordion-item.active .accordion-content { display: block; }
 
         footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: #999; }
+        /* 🌟 [신규 추가] 구글 시트 바로가기 버튼 스타일 */
+        .btn-sheet {
+            background-color: #27ae60; 
+            color: white; 
+            text-decoration: none; 
+            padding: 7px 14px; 
+            border-radius: 4px; 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .btn-sheet:hover {
+            background-color: #219150;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -98,7 +116,14 @@
         <img src="logo_Type8.png" alt="Logo" class="header-logo">
         정밀도로지도 구축·갱신(6지구) 프로젝트 관리
     </h1>
-    <div class="system-status" id="current-time"></div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <a href="https://docs.google.com/spreadsheets/d/1quV3cXz-zsKZfZYPrrCi0ZIbHVGWBy5fav4YGuBw9Gg/edit?gid=0#gid=0" 
+           target="_blank" 
+           class="btn-sheet">
+           📊 데이터 시트
+        </a>
+        <div class="system-status" id="current-time"></div>
+    </div>
 </header>
 
 <div class="container">
