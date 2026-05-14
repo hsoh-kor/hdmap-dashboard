@@ -60,7 +60,10 @@
         .btn-download { display: inline-flex; align-items: center; gap: 5px; padding: 10px 15px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; margin-top: 15px; transition: background 0.2s; }
         .btn-download:hover { background: #1a252f; }
         
-        /* 🌟 [신규] PDF 미리보기 창 스타일 */
+        /* 외부 링크 버튼 특별 스타일 */
+        .btn-link { background: #27ae60; }
+        .btn-link:hover { background: #219150; }
+
         .pdf-viewer { width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 6px; margin-top: 15px; display: block; }
 
         .form-actions { text-align: right; margin-top: 10px; }
@@ -94,9 +97,17 @@
         <textarea id="caseMethod" placeholder="조치 방법"></textarea>
         <textarea id="caseExample" placeholder="상세 사례 설명"></textarea>
         
-        <div id="dropZone" class="drop-zone">
-            <span id="dropZoneText">📸 이미지(JPG, PNG) 또는 <b>PDF 문서</b>를 드래그하여 업로드하세요<br>(※ 미리보기를 위해 PPTX는 PDF로 저장 후 업로드 권장)</span>
-            <input type="file" id="caseFile" style="display:none;" accept="image/*, .pdf, application/pdf, .pptx, application/vnd.openxmlformats-officedocument.presentationml.presentation">
+        <div style="background: #f0f7ff; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #cce5ff;">
+            <b style="color: #0056b3; font-size: 0.9rem; display: block; margin-bottom: 10px;">💾 첨부 파일 설정 (둘 중 하나만 선택)</b>
+            
+            <input type="text" id="caseExternalLink" placeholder="🔗 옵션 1. 대용량 파일 공유 링크 (구글 드라이브 등 URL 입력)" style="border-color: #99c2ff;">
+            
+            <div style="text-align: center; color: #666; font-size: 0.8rem; margin: 10px 0;">또는</div>
+            
+            <div id="dropZone" class="drop-zone" style="margin-bottom: 0;">
+                <span id="dropZoneText">📸 옵션 2. 소용량 파일(JPG, PDF 등 5MB 이하) 드래그 업로드</span>
+                <input type="file" id="caseFile" style="display:none;" accept="image/*, .pdf, application/pdf, .pptx, application/vnd.openxmlformats-officedocument.presentationml.presentation">
+            </div>
         </div>
 
         <div class="form-actions">
@@ -123,6 +134,7 @@
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('caseFile');
     const dropZoneText = document.getElementById('dropZoneText');
+    const externalLinkInput = document.getElementById('caseExternalLink'); // 링크 입력칸
     
     let uploadedFileData = "";
     let uploadedFileName = "";
@@ -154,16 +166,30 @@
             uploadedFileData = e.target.result;
             uploadedFileName = file.name;
             
-            // 파일 타입 판별 저장
             if (isImage) uploadedFileType = 'image';
             else if (isPDF) uploadedFileType = 'pdf';
             else if (isPPTX) uploadedFileType = 'pptx';
             
             dropZoneText.innerHTML = `✅ 파일 선택 완료: <b>${file.name}</b>`;
             dropZone.classList.add('has-file');
+            
+            // 파일 업로드 시 링크 칸은 비워줍니다.
+            externalLinkInput.value = "";
         };
         reader.readAsDataURL(file);
     }
+
+    // 링크 칸에 글을 쓰면 드롭존을 초기화합니다.
+    externalLinkInput.addEventListener('input', () => {
+        if (externalLinkInput.value.trim() !== "") {
+            uploadedFileData = "";
+            uploadedFileName = "";
+            uploadedFileType = "";
+            fileInput.value = "";
+            dropZoneText.innerHTML = "📸 옵션 2. 소용량 파일(JPG, PDF 등 5MB 이하) 드래그 업로드";
+            dropZone.classList.remove('has-file');
+        }
+    });
 
     function saveCase() {
         const category = document.getElementById('caseCategory').value;
@@ -172,6 +198,7 @@
         const desc = document.getElementById('caseDesc').value;
         const method = document.getElementById('caseMethod').value;
         const example = document.getElementById('caseExample').value;
+        const externalLink = document.getElementById('caseExternalLink').value;
 
         if (!title || !category) return alert("카테고리와 제목은 필수입니다.");
 
@@ -180,14 +207,15 @@
             category, title, cause, desc, method, example,
             fileData: uploadedFileData,
             fileName: uploadedFileName,
-            fileType: uploadedFileType
+            fileType: uploadedFileType,
+            externalLink: externalLink // 🌟 링크 데이터 추가 저장
         };
 
         try {
             errorCases.unshift(newCase);
             localStorage.setItem('errorCases', JSON.stringify(errorCases));
         } catch (e) {
-            alert("🚨 저장소 용량이 초과되었습니다! 용량을 줄여서 다시 시도해주세요.");
+            alert("🚨 브라우저 저장소 용량이 초과되었습니다! 용량이 큰 파일은 [옵션 1] 구글 드라이브 링크를 이용해주세요.");
             errorCases.shift(); 
             return;
         }
@@ -198,7 +226,7 @@
         uploadedFileName = "";
         uploadedFileType = "";
         fileInput.value = "";
-        dropZoneText.innerHTML = "📸 이미지(JPG, PNG) 또는 <b>PDF 문서</b>를 드래그하여 업로드하세요";
+        dropZoneText.innerHTML = "📸 옵션 2. 소용량 파일(JPG, PDF 등 5MB 이하) 드래그 업로드";
         dropZone.classList.remove('has-file');
         
         toggleForm();
@@ -226,15 +254,18 @@
 
         list.innerHTML = errorCases.map(c => {
             let fileHtml = '';
-            if (c.fileData) {
+            
+            // 🌟 1. 우선순위: 외부 링크가 있으면 무조건 링크 버튼 생성
+            if (c.externalLink && c.externalLink.trim() !== "") {
+                fileHtml = `<a href="${c.externalLink}" target="_blank" class="btn-download btn-link">🔗 대용량 원본 파일 열기 (구글 드라이브 등)</a>`;
+            } 
+            // 🌟 2. 외부 링크가 없고 파일만 업로드된 경우 기존 로직
+            else if (c.fileData) {
                 if (c.fileType === 'image') {
-                    // 1. 이미지는 그대로 표시
                     fileHtml = `<img src="${c.fileData}" class="case-image">`;
                 } else if (c.fileType === 'pdf') {
-                    // 🌟 2. PDF는 브라우저 내장 뷰어(iframe)를 통해 완벽한 미리보기 제공
                     fileHtml = `<iframe src="${c.fileData}#toolbar=0" class="pdf-viewer"></iframe>`;
                 } else if (c.fileType === 'pptx') {
-                    // 3. PPTX는 브라우저 기술적 한계로 다운로드 버튼 제공
                     fileHtml = `<p style="font-size:0.8rem; color:#666;">(PPTX 파일은 브라우저 미리보기를 지원하지 않습니다)</p>
                                 <a href="${c.fileData}" download="${c.fileName}" class="btn-download">📄 ${c.fileName} 다운로드</a>`;
                 }
