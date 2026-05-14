@@ -189,6 +189,71 @@
         body.dark-mode .side-content section[style*="background-color: #fffaf0"] { background-color: #1f2937 !important; border-color: #92400e !important; }
         body.dark-mode .btn-sheet { background-color: #15803d; }
 
+
+
+        /* ==========================================
+           🌙 다크모드 보강 패치 v2
+           - 인라인 color/background 때문에 안 보이던 글씨 보정
+        ========================================== */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode .section-header,
+        body.dark-mode .section-header *:not(.btn-add):not(.btn-mini):not(.status-tag),
+        body.dark-mode .list-group,
+        body.dark-mode .list-group *,
+        body.dark-mode .accordion-content,
+        body.dark-mode .accordion-content *:not(canvas),
+        body.dark-mode .summary-table,
+        body.dark-mode .summary-table *,
+        body.dark-mode .input-form,
+        body.dark-mode .input-form *:not(button),
+        body.dark-mode .drop-zone,
+        body.dark-mode .drop-zone *,
+        body.dark-mode [style*="color:#333"],
+        body.dark-mode [style*="color: #333"],
+        body.dark-mode [style*="color:#444"],
+        body.dark-mode [style*="color: #444"],
+        body.dark-mode [style*="color:#555"],
+        body.dark-mode [style*="color: #555"],
+        body.dark-mode [style*="color:#666"],
+        body.dark-mode [style*="color: #666"],
+        body.dark-mode [style*="color:#777"],
+        body.dark-mode [style*="color: #777"],
+        body.dark-mode [style*="color:#888"],
+        body.dark-mode [style*="color: #888"],
+        body.dark-mode [style*="color:#999"],
+        body.dark-mode [style*="color: #999"] {
+            color: #dbeafe !important;
+        }
+        body.dark-mode [style*="background: #f0f7ff"],
+        body.dark-mode [style*="background:#f0f7ff"],
+        body.dark-mode [style*="background-color: #fffaf0"],
+        body.dark-mode [style*="background-color:#fffaf0"],
+        body.dark-mode [style*="background: #f8f9fa"],
+        body.dark-mode [style*="background:#f8f9fa"],
+        body.dark-mode [style*="background: #fdfdfd"],
+        body.dark-mode [style*="background:#fdfdfd"] {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #e5e7eb !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background-color: #020617 !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder { color: #94a3b8 !important; }
+        body.dark-mode a:not(.btn-sheet):not(.btn-download):not(.btn-link) { color: #93c5fd; }
+        body.dark-mode .btn-del { color: #fca5a5 !important; }
+        body.dark-mode .btn-add,
+        body.dark-mode .btn-sheet,
+        body.dark-mode .theme-toggle-btn { color: #ffffff !important; }
+
     </style>
 </head>
 <body>

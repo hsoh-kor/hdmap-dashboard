@@ -214,6 +214,81 @@
         body.dark-mode .chat-input-area input::placeholder { color: #94a3b8; }
         body.dark-mode #resetFiltersBtn { background: #1f2937 !important; color: #e5e7eb !important; border-color: #475569 !important; }
 
+
+
+        /* ==========================================
+           🌙 다크모드 보강 패치 v2
+           - 대시보드 인라인 색상/모달/챗봇/필터 글씨 보정
+        ========================================== */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode .sidebar-content,
+        body.dark-mode .sidebar-content *:not(canvas):not(button),
+        body.dark-mode .accordion-content,
+        body.dark-mode .accordion-content *:not(canvas):not(button),
+        body.dark-mode .route-list-container,
+        body.dark-mode .route-list-container *,
+        body.dark-mode .checkbox-group,
+        body.dark-mode .checkbox-group *,
+        body.dark-mode .modal-content,
+        body.dark-mode .modal-content *,
+        body.dark-mode .legend,
+        body.dark-mode .legend *,
+        body.dark-mode .chat-window,
+        body.dark-mode .chat-window *:not(button),
+        body.dark-mode [style*="color:#333"],
+        body.dark-mode [style*="color: #333"],
+        body.dark-mode [style*="color:#444"],
+        body.dark-mode [style*="color: #444"],
+        body.dark-mode [style*="color:#555"],
+        body.dark-mode [style*="color: #555"],
+        body.dark-mode [style*="color:#666"],
+        body.dark-mode [style*="color: #666"],
+        body.dark-mode [style*="color:#777"],
+        body.dark-mode [style*="color: #777"],
+        body.dark-mode [style*="color:#888"],
+        body.dark-mode [style*="color: #888"],
+        body.dark-mode [style*="color:#999"],
+        body.dark-mode [style*="color: #999"] {
+            color: #dbeafe !important;
+        }
+        body.dark-mode [style*="background-color: #e3f2fd"],
+        body.dark-mode [style*="background-color:#e3f2fd"],
+        body.dark-mode [style*="background: #f8f9fa"],
+        body.dark-mode [style*="background:#f8f9fa"],
+        body.dark-mode [style*="background: #f9f9f9"],
+        body.dark-mode [style*="background:#f9f9f9"],
+        body.dark-mode [style*="background: white"],
+        body.dark-mode [style*="background:white"] {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #e5e7eb !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background-color: #020617 !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder { color: #94a3b8 !important; }
+        body.dark-mode button:not(.active):not(.report-btn):not(.chat-input-area button):not(#closeRoadviewBtn) {
+            color: #e5e7eb;
+        }
+        body.dark-mode .map-mode-control button.active,
+        body.dark-mode .chart-toggle-control button.active,
+        body.dark-mode .report-btn,
+        body.dark-mode .chat-input-area button,
+        body.dark-mode #closeRoadviewBtn,
+        body.dark-mode .theme-toggle-btn { color: #ffffff !important; }
+        body.dark-mode .chat-message.user { color: #ffffff !important; }
+        body.dark-mode .typing-indicator { color: #cbd5e1 !important; }
+        body.dark-mode .modal-close { color: #cbd5e1 !important; }
+        body.dark-mode .modal-close:hover { color: #ffffff !important; }
+
     </style>
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=7198914f7509f89a5434593cec182ab4"></script>
 </head>

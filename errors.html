@@ -132,6 +132,65 @@
         body.dark-mode .back-link { background: rgba(255,255,255,0.12); }
         body.dark-mode .back-link:hover { background: rgba(255,255,255,0.22); }
 
+
+
+        /* ==========================================
+           🌙 다크모드 보강 패치 v2
+           - 오류사례 페이지 인라인 색상/첨부영역/표 글씨 보정
+        ========================================== */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode .container,
+        body.dark-mode .container *:not(button):not(a),
+        body.dark-mode .error-table,
+        body.dark-mode .error-table *,
+        body.dark-mode .case-box,
+        body.dark-mode .case-box *,
+        body.dark-mode [style*="color:#333"],
+        body.dark-mode [style*="color: #333"],
+        body.dark-mode [style*="color:#555"],
+        body.dark-mode [style*="color: #555"],
+        body.dark-mode [style*="color:#666"],
+        body.dark-mode [style*="color: #666"],
+        body.dark-mode [style*="color:#777"],
+        body.dark-mode [style*="color: #777"],
+        body.dark-mode [style*="color:#888"],
+        body.dark-mode [style*="color: #888"],
+        body.dark-mode [style*="color:#999"],
+        body.dark-mode [style*="color: #999"] {
+            color: #dbeafe !important;
+        }
+        body.dark-mode [style*="background: #f0f7ff"],
+        body.dark-mode [style*="background:#f0f7ff"],
+        body.dark-mode [style*="background: #fafafa"],
+        body.dark-mode [style*="background:#fafafa"],
+        body.dark-mode [style*="background: #f9f9f9"],
+        body.dark-mode [style*="background:#f9f9f9"],
+        body.dark-mode [style*="background: white"],
+        body.dark-mode [style*="background:white"] {
+            background: #1e293b !important;
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #e5e7eb !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background-color: #020617 !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder { color: #94a3b8 !important; }
+        body.dark-mode .btn-add,
+        body.dark-mode .btn-download,
+        body.dark-mode .btn-link,
+        body.dark-mode .theme-toggle-btn { color: #ffffff !important; }
+        body.dark-mode .btn-del { color: #fca5a5 !important; }
+        body.dark-mode .btn-cancel { background: #334155 !important; color: #e5e7eb !important; }
+        body.dark-mode .back-link { color: #ffffff !important; }
+
     </style>
 </head>
 <body>
