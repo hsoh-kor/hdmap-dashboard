@@ -439,8 +439,24 @@
         }
     }
 
+    // 🌟 [추가] 관리자 전용 삭제 기능 (비밀번호 보호)
     function deleteItem(type, id) {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
+        // 1. 여기서 원하시는 관리자 비밀번호를 설정하세요 (현재 '1234')
+        const adminPassword = "1234"; 
+        
+        // 2. 삭제 버튼 클릭 시 비밀번호 입력창 띄우기
+        const inputPwd = prompt("삭제 권한이 필요합니다. 관리자 비밀번호를 입력하세요:");
+        
+        // 3. 취소 버튼을 누르거나 비밀번호가 틀렸을 때의 처리
+        if (inputPwd === null) return; // 취소 누름
+        if (inputPwd !== adminPassword) {
+            alert("🚨 비밀번호가 일치하지 않아 삭제할 수 없습니다.");
+            return;
+        }
+
+        // 4. 비밀번호가 맞았을 때만 실제 삭제 진행
+        if (!confirm("정말 이 항목을 삭제하시겠습니까?")) return;
+        
         if (type === 'notice') {
             notices = notices.filter(n => n.id !== id);
             localStorage.setItem('notices', JSON.stringify(notices));
