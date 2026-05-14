@@ -268,11 +268,13 @@
         <textarea id="caseMethod" placeholder="조치 방법"></textarea>
         <textarea id="caseExample" placeholder="상세 사례 설명"></textarea>
         
-        <p class="shared-help-text">오류사례 첨부파일은 Firebase Storage에 직접 업로드되며, 등록 후 모든 사용자가 같은 사례를 확인할 수 있습니다. 권장 용량은 30MB 이하입니다.</p>
+        <p class="shared-help-text">오류사례 첨부파일은 Firebase Storage에 직접 업로드되며, 등록 후 모든 사용자가 같은 사례를 확인할 수 있습니다. 200MB 이하 파일은 직접 업로드할 수 있고, 200MB 초과 대용량 파일은 구글드라이브 공유 링크로 등록하세요.</p>
         <div style="background: #f0f7ff; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #cce5ff;">
-            <b style="color: #0056b3; font-size: 0.9rem; display: block; margin-bottom: 10px;">💾 첨부 파일 업로드</b>
+            <b style="color: #0056b3; font-size: 0.9rem; display: block; margin-bottom: 10px;">💾 첨부 파일 설정</b>
+            <input type="text" id="caseExternalLink" placeholder="🔗 옵션 1. 200MB 초과 대용량 파일 공유 링크 (구글드라이브 등 URL 입력)" style="border-color: #99c2ff;">
+            <div style="text-align: center; color: #666; font-size: 0.8rem; margin: 10px 0;">또는</div>
             <div id="dropZone" class="drop-zone" style="margin-bottom: 0;">
-                <span id="dropZoneText">📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)</span>
+                <span id="dropZoneText">📸 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)</span>
                 <input type="file" id="caseFile" style="display:none;" accept="image/*,.pdf,application/pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             </div>
         </div>
@@ -350,6 +352,7 @@
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('caseFile');
     const dropZoneText = document.getElementById('dropZoneText');
+    const externalLinkInput = document.getElementById('caseExternalLink');
 
     dropZone.onclick = () => fileInput.click();
     fileInput.onchange = (e) => handleFile(e.target.files[0]);
@@ -364,12 +367,23 @@
         }
     };
 
+    if (externalLinkInput) {
+        externalLinkInput.addEventListener('input', () => {
+            if (externalLinkInput.value.trim() !== '') {
+                selectedCaseFile = null;
+                fileInput.value = '';
+                dropZoneText.innerHTML = '📸 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)';
+                dropZone.classList.remove('has-file');
+            }
+        });
+    }
+
     function handleFile(file) {
         if (!file) return;
         const isImage = file.type.startsWith('image/');
         const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
         const isPPTX = file.name.toLowerCase().endsWith('.pptx') || file.type.includes('presentation');
-        const maxSize = 30 * 1024 * 1024;
+        const maxSize = 200 * 1024 * 1024;
 
         if (!isImage && !isPDF && !isPPTX) {
             fileInput.value = '';
@@ -379,10 +393,11 @@
         if (file.size > maxSize) {
             fileInput.value = '';
             selectedCaseFile = null;
-            return alert("30MB 이하 파일만 업로드할 수 있습니다.");
+            return alert("200MB 이하 파일만 직접 업로드할 수 있습니다. 200MB 초과 대용량 파일은 구글드라이브 공유 링크를 입력해 주세요.");
         }
 
         selectedCaseFile = file;
+        if (externalLinkInput) externalLinkInput.value = '';
         dropZoneText.innerHTML = `✅ 파일 선택 완료: <b>${escapeHtml(file.name)}</b> (${formatFileSize(file.size)})`;
         dropZone.classList.add('has-file');
     }
@@ -399,6 +414,7 @@
         const method = document.getElementById('caseMethod').value.trim();
         const example = document.getElementById('caseExample').value.trim();
         const file = selectedCaseFile || fileInput.files[0] || null;
+        const externalLink = externalLinkInput ? externalLinkInput.value.trim() : '';
 
         if (!title || !category) return alert("카테고리와 제목은 필수입니다.");
 
@@ -408,10 +424,21 @@
                 fileUrl: '',
                 fileType: '',
                 fileSize: 0,
-                storagePath: ''
+                storagePath: '',
+                externalLink: ''
             };
 
-            if (file) {
+            if (externalLink) {
+                fileInfo = {
+                    fileName: '구글드라이브 링크',
+                    fileUrl: externalLink,
+                    fileType: 'external-link',
+                    fileMimeType: '',
+                    fileSize: 0,
+                    storagePath: '',
+                    externalLink
+                };
+            } else if (file) {
                 const safeName = sanitizeFileName(file.name);
                 const storagePath = `errorCases/${Date.now()}_${safeName}`;
                 const fileRef = fb.ref(fb.storage, storagePath);
@@ -450,7 +477,7 @@
             document.querySelectorAll('.input-form input, .input-form textarea').forEach(el => el.value = "");
             selectedCaseFile = null;
             fileInput.value = "";
-            dropZoneText.innerHTML = "📸 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)";
+            dropZoneText.innerHTML = "📸 옵션 2. 200MB 이하 파일을 드래그하거나 클릭해서 업로드 (JPG/PNG/PDF/PPTX)";
             dropZone.classList.remove('has-file');
             toggleForm();
         } catch (error) {
@@ -490,7 +517,9 @@
 
         list.innerHTML = errorCases.map(c => {
             let fileHtml = '';
-            if (c.fileUrl) {
+            if (c.externalLink) {
+                fileHtml = `<a href="${c.externalLink}" target="_blank" rel="noopener" class="btn-download btn-link">🔗 구글드라이브 대용량 파일 열기</a>`;
+            } else if (c.fileUrl) {
                 const safeFileName = escapeHtml(c.fileName || '첨부파일');
                 if (c.fileType === 'image') {
                     fileHtml = `<img src="${c.fileUrl}" alt="${safeFileName}" class="case-image">`;
@@ -510,7 +539,7 @@
                     <button class="btn-del" onclick="deleteCase('${c.id}')">삭제</button>
                     <div class="category-tag">${escapeHtml(c.category)}</div>
                     <h2>${escapeHtml(c.title)}</h2>
-                    <div class="case-meta">등록자: ${escapeHtml(c.createdByName || '등록자 미상')} · 등록일: ${formatFirebaseDate(c.createdAt)}${c.fileName ? ` · 첨부: ${escapeHtml(c.fileName)} (${formatFileSize(c.fileSize)})` : ''}</div>
+                    <div class="case-meta">등록자: ${escapeHtml(c.createdByName || '등록자 미상')} · 등록일: ${formatFirebaseDate(c.createdAt)}${c.externalLink ? ' · 첨부: 구글드라이브 링크' : (c.fileName ? ` · 첨부: ${escapeHtml(c.fileName)} (${formatFileSize(c.fileSize)})` : '')}</div>
                     <table class="error-table">
                         <tr><th>발생 원인</th><td>${escapeHtml(c.cause || '-')}</td></tr>
                         <tr><th>오류 내용</th><td>${escapeHtml(c.desc || '-')}</td></tr>
