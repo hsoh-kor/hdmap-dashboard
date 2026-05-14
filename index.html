@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>정밀도로지도 구축·갱신(6지구) 프로젝트 관리</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -60,40 +61,32 @@
         .btn-mini { font-size: 0.75rem; padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; color: #333; text-decoration: none; background: #fff; cursor: pointer; }
         .btn-mini:hover { background: #f4f4f4; }
 
-        /* 입력 폼 스타일 */
         .input-form { display: none; margin-bottom: 20px; padding: 15px; background: #fdfdfd; border-radius: 6px; border: 2px dashed var(--accent-color); }
         .input-form input[type="text"], .input-form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; font-family: inherit; }
         .input-form textarea { height: 100px; resize: none; }
         .form-actions { text-align: right; gap: 10px; display: flex; justify-content: flex-end; }
 
-        /* 🌟 [신규 추가] 커스텀 드래그 앤 드롭 파일 업로드 영역 스타일 */
-        .drop-zone {
-            border: 2px dashed #bbb;
-            border-radius: 6px;
-            padding: 25px 15px;
-            text-align: center;
-            color: #777;
-            cursor: pointer;
-            margin-bottom: 15px;
-            transition: all 0.2s ease;
-            background-color: #fff;
-            font-size: 0.85rem;
-        }
-        .drop-zone:hover, .drop-zone.dragover {
-            background-color: #f4f9fd;
-            border-color: var(--accent-color);
-            color: var(--primary-color);
-        }
-        .drop-zone.has-file {
-            background-color: #e8f4fd;
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-        /* 기본 파일 input 태그 숨기기 */
-        .drop-zone input[type="file"] {
-            display: none;
-        }
+        .drop-zone { border: 2px dashed #bbb; border-radius: 6px; padding: 25px 15px; text-align: center; color: #777; cursor: pointer; margin-bottom: 15px; transition: all 0.2s ease; background-color: #fff; font-size: 0.85rem; }
+        .drop-zone:hover, .drop-zone.dragover { background-color: #f4f9fd; border-color: var(--accent-color); color: var(--primary-color); }
+        .drop-zone.has-file { background-color: #e8f4fd; border-color: var(--accent-color); color: var(--accent-color); font-weight: bold; }
+        .drop-zone input[type="file"] { display: none; }
+
+        /* 🌟 [신규 추가] 차트 및 표 관련 CSS 스타일 */
+        .chart-container { position: relative; width: 100%; margin-bottom: 15px; background: white; }
+        
+        .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85rem; }
+        .summary-table th, .summary-table td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-break: keep-all; }
+        .summary-table th { background-color: #f0f4f8; color: var(--text-color); font-weight: 600; }
+        .summary-table tr:nth-child(even) { background-color: #fafbfc; }
+        
+        .accordion-item { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+        .accordion-header { background-color: #f8f9fa; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.95rem; color: var(--primary-color); transition: background-color 0.2s; }
+        .accordion-header:hover { background-color: #edf2f7; }
+        .accordion-item.active .accordion-header { background-color: #e2e8f0; border-bottom: 1px solid var(--border-color); }
+        .accordion-header::after { content: '▼'; font-size: 10px; transition: transform 0.3s; }
+        .accordion-item.active .accordion-header::after { transform: rotate(180deg); }
+        .accordion-content { display: none; padding: 15px; background: #fff; overflow-x: auto; }
+        .accordion-item.active .accordion-content { display: block; }
 
         footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: #999; }
     </style>
@@ -112,17 +105,41 @@
     <div class="main-content">
         <section>
             <div class="section-header">
-                <h2>활성 프로젝트 대시보드</h2>
+                <h2>활성 프로젝트 대시보드 바로가기</h2>
             </div>
             <div class="dashboard-grid">
                 <a href="dashboard.html" class="card">
                     <span class="status-tag">진행 중</span>
-                    <h3>'26년도 정밀도로지도 제작</h3>
-                    <p>정밀도로지도 구축·갱신(6지구) 현황판</p>
+                    <h3>'26년도 정밀도로지도 제작 (지도 모드)</h3>
+                    <p>6지구 공간정보 시각화 및 필터링 대시보드로 이동합니다.</p>
                 </a>
             </div>
         </section>
 
+        <section>
+            <div class="section-header">
+                <h2>📈 전체 사업 검사 현황 요약</h2>
+            </div>
+            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-bottom:5px;">■ 전체 검사 비율 (구간 수 기준)</div>
+            <div class="chart-container" style="height: 200px;">
+                <canvas id="inspectChart"></canvas>
+            </div>
+            <div style="font-size:0.9rem; font-weight:bold; color:#555; margin-top:30px; margin-bottom:5px;">■ DB 담당 업체별 현황 (구간 수 기준)</div>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="companyInspectChart"></canvas>
+            </div>
+        </section>
+
+        <section id="summary-section">
+            <h2 style="margin-bottom: 15px;">📊 사업 총괄 현황 (표)</h2>
+            <div id="summary-content" style="text-align:center; color:#999; font-size:0.9rem; padding:20px;">
+                서버에서 총괄 데이터를 불러오는 중입니다...
+            </div>
+        </section>
+
+    </div>
+
+    <div class="side-content">
         <section>
             <div class="section-header">
                 <h2>사업 주요 공지사항</h2>
@@ -140,9 +157,7 @@
 
             <ul class="list-group" id="noticeList"></ul>
         </section>
-    </div>
 
-    <div class="side-content">
         <section>
             <div class="section-header">
                 <h2>실무 자료실</h2>
@@ -183,7 +198,165 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // 2. 데이터 관리
+    // ==========================================
+    // 🌟 [신규 추가] 구글 시트 데이터 로드 및 차트/표 렌더링 로직
+    // ==========================================
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyC1CaeKeqwJ9g_RVZHmZ4uOdpmJETrnQWv12wfcavpQY0yW406s4tNcVkDfkbvXVA4/exec'; 
+
+    async function fetchDashboardSummary() {
+        try {
+            const response = await fetch(GAS_URL, { redirect: "follow" });
+            const data = await response.json();
+            
+            // 차트 렌더링
+            renderCharts(data.sectionData);
+            
+            // 표 렌더링
+            renderSummaryTable(data.summaryData, data.deliveryStatus);
+        } catch (error) {
+            console.error("데이터 갱신 실패:", error);
+            document.getElementById('summary-content').innerHTML = '<div style="color:#e74c3c; padding:20px;">데이터를 불러오는 데 실패했습니다. 통신 상태를 확인하세요.</div>';
+        }
+    }
+
+    function renderCharts(sectionData) {
+        let inspectCounts = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
+        let companyStats = {};
+
+        for (let id in sectionData) {
+            let item = sectionData[id];
+            let ins = item.inspect || "";
+            let comp = (item.dbCompany || "").trim();
+
+            let statusKey = '미진행';
+            if (ins.includes('적합') && !ins.includes('부적합')) statusKey = '적합';
+            else if (ins.includes('부적합')) statusKey = '부적합';
+            else if (ins.includes('검수의뢰')) statusKey = '검수의뢰';
+            else if (ins.includes('반려')) statusKey = '반려';
+
+            inspectCounts[statusKey] += 1; // 구간 수(Count) 기준
+
+            if (comp !== "") {
+                if (!companyStats[comp]) companyStats[comp] = { '적합': 0, '검수의뢰': 0, '반려': 0, '부적합': 0, '미진행': 0 };
+                companyStats[comp][statusKey] += 1;
+            }
+        }
+
+        // 1번 차트: 전체 검사 현황 도넛 차트
+        const ctxInspect = document.getElementById('inspectChart').getContext('2d');
+        new Chart(ctxInspect, {
+            type: 'doughnut',
+            data: {
+                labels: ['적합', '검수의뢰', '반려', '부적합', '미진행'],
+                datasets: [{ 
+                    data: [inspectCounts['적합'], inspectCounts['검수의뢰'], inspectCounts['반려'], inspectCounts['부적합'], inspectCounts['미진행']], 
+                    backgroundColor: ['#32CD32', '#1a73e8', '#f39c12', '#e74c3c', '#e0e0e0'], 
+                    borderWidth: 0, hoverOffset: 4 
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, cutout: '50%', 
+                plugins: { legend: { position: 'right', labels: { font: { family: 'Pretendard' } } } } 
+            }
+        });
+
+        // 2번 차트: 업체별 검사 현황 누적 막대 차트
+        const ctxCompany = document.getElementById('companyInspectChart').getContext('2d');
+        const compLabels = Object.keys(companyStats).sort();
+        new Chart(ctxCompany, {
+            type: 'bar',
+            data: {
+                labels: compLabels,
+                datasets: [
+                    { label: '적합', data: compLabels.map(c => companyStats[c]['적합']), backgroundColor: '#32CD32' },
+                    { label: '검수의뢰', data: compLabels.map(c => companyStats[c]['검수의뢰']), backgroundColor: '#1a73e8' },
+                    { label: '반려', data: compLabels.map(c => companyStats[c]['반려']), backgroundColor: '#f39c12' },
+                    { label: '부적합', data: compLabels.map(c => companyStats[c]['부적합']), backgroundColor: '#e74c3c' },
+                    { label: '미진행', data: compLabels.map(c => companyStats[c]['미진행']), backgroundColor: '#e0e0e0' }
+                ]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                scales: { x: { stacked: true }, y: { stacked: true } }, 
+                plugins: { legend: { position: 'bottom', labels: { font: { family: 'Pretendard' } } } } 
+            }
+        });
+    }
+
+    function renderSummaryTable(summaryData, deliveryData) {
+        const container = document.getElementById('summary-content');
+        if (!summaryData) return;
+        container.innerHTML = ''; // 로딩 메시지 삭제
+
+        if (summaryData.monthly && summaryData.monthly.length > 0) {
+            const monthlyItem = document.createElement('div'); monthlyItem.className = 'accordion-item active'; 
+            let html = `<div class="accordion-header">🔹 월별 제출 물량</div><div class="accordion-content"><table class="summary-table"><thead><tr><th>납품월</th><th>날짜</th><th>연장</th><th>물량</th></tr></thead><tbody>`;
+            let currentMonth = "";
+            for (let i = 0; i < summaryData.monthly.length; i++) {
+                let row = summaryData.monthly[i];
+                let len = (row.length !== "" && !isNaN(row.length)) ? Number(row.length).toFixed(2) : (row.length || "-");
+                let amt = (row.amount !== "" && !isNaN(row.amount)) ? Number(row.amount).toFixed(2) : (row.amount || "-");
+                if (row.month === "총계" || row.month === "총 계") { html += `<tr style="background:#ffebee; font-weight:bold;"><td colspan="2">총 계</td><td>${len}</td><td>${amt}</td></tr>`; } 
+                else if (row.month !== currentMonth && row.month !== "") {
+                    currentMonth = row.month; let rCount = summaryData.monthly.filter(x => x.month === currentMonth).length;
+                    html += `<tr><td rowspan="${rCount}" style="background:#f9f9f9; font-weight:bold;">${currentMonth}</td><td>${row.date}</td><td>${len}</td><td rowspan="${rCount}" style="color:#1a73e8; font-weight:bold;">${amt}</td></tr>`;
+                } else { html += `<tr><td>${row.date}</td><td>${len}</td></tr>`; }
+            }
+            monthlyItem.innerHTML = html + `</tbody></table></div>`; container.appendChild(monthlyItem);
+        }
+
+        if (summaryData.company && summaryData.company.length > 0) {
+            const companyItem = document.createElement('div'); companyItem.className = 'accordion-item'; 
+            let html = `<div class="accordion-header">🔹 공정별 업체 현황</div><div class="accordion-content">`;
+            let isTableOpen = false;
+            for (let i = 0; i < summaryData.company.length; i++) {
+                let row = summaryData.company[i];
+                let c1 = row.col1, c2 = (row.col2 !== "" && !isNaN(row.col2)) ? Number(row.col2).toFixed(2) : (row.col2 || "-");
+                let c3 = (row.col3 !== "" && !isNaN(row.col3)) ? Number(row.col3).toFixed(2) : (row.col3 || "-"), c4_raw = row.col4;
+                if (c1 !== "" && row.col2 === "" && row.col3 === "" && row.col4 === "") {
+                    if (isTableOpen) { html += `</tbody></table>`; isTableOpen = false; }
+                    html += `<div style="font-size:12px; font-weight:bold; color:#d35400; margin: 10px 0 5px 0;">📍 ${c1}</div>`;
+                } else if (c1 === "담당업체" || c1 === "업체명") {
+                    if (isTableOpen) { html += `</tbody></table>`; }
+                    html += `<table class="summary-table"><thead><tr><th>${c1}</th><th>담당물량</th><th>완료물량</th><th>비율</th></tr></thead><tbody>`; isTableOpen = true;
+                } else {
+                    if (!isTableOpen) { html += `<table class="summary-table"><tbody>`; isTableOpen = true; }
+                    let rowStyle = (c1.includes("합계") || c1.includes("총계")) ? `style="background:#ffebee; font-weight:bold;"` : "";
+                    let c4Html = (!isNaN(c4_raw) && c4_raw !== "") ? `<span style="color:#1a73e8; font-weight:bold;">${(Number(c4_raw)*100).toFixed(2)}%</span>` : (c4_raw || "-");
+                    html += `<tr ${rowStyle}><td>${c1}</td><td>${c2}</td><td>${c3}</td><td>${c4Html}</td></tr>`;
+                }
+            }
+            companyItem.innerHTML = html + (isTableOpen ? `</tbody></table>` : "") + `</div>`; container.appendChild(companyItem);
+        }
+
+        if (deliveryData && deliveryData.length > 0) {
+            const deliveryItem = document.createElement('div'); deliveryItem.className = 'accordion-item'; 
+            let html = `<div class="accordion-header">📦 납품월별 업체 현황</div><div class="accordion-content"><table class="summary-table"><thead><tr><th>월</th><th>업체</th><th>연장</th><th>물량</th></tr></thead><tbody>`;
+            let curMonth = "";
+            deliveryData.forEach(row => {
+                let len = (row.length === 0 || row.length === "") ? "-" : (!isNaN(row.length) ? Number(row.length).toFixed(2) : row.length);
+                let amt = (row.amount === 0 || row.amount === "") ? "-" : (!isNaN(row.amount) ? Number(row.amount).toFixed(2) : row.amount);
+                if (row.month !== curMonth) {
+                    curMonth = row.month; let rCount = deliveryData.filter(x => x.month === curMonth).length;
+                    html += `<tr style="border-top: 2px solid #ccc;"><td rowspan="${rCount}" style="background:#f0f7ff; font-weight:bold; color:#0056b3;">${curMonth}</td><td>${row.company}</td><td>${len}</td><td>${amt}</td></tr>`;
+                } else { html += `<tr><td>${row.company}</td><td>${len}</td><td>${amt}</td></tr>`; }
+            });
+            deliveryItem.innerHTML = html + `</tbody></table></div>`; container.appendChild(deliveryItem);
+        }
+
+        // 아코디언 열기/닫기 이벤트 연결
+        container.querySelectorAll('.accordion-header').forEach(h => { 
+            h.onclick = function() { this.parentElement.classList.toggle('active'); }; 
+        });
+    }
+
+    // 서버에 데이터 요청 시작!
+    fetchDashboardSummary();
+
+
+    // ==========================================
+    // 3. 로컬 스토리지 (공지/자료) 관리 로직
+    // ==========================================
     let notices = JSON.parse(localStorage.getItem('notices')) || [];
     let resources = JSON.parse(localStorage.getItem('resources')) || [];
 
@@ -192,43 +365,22 @@
         form.style.display = (form.style.display === 'block') ? 'none' : 'block';
     }
 
-    // 🌟 [신규 추가] 드래그 앤 드롭 로직
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('resourceFile');
     const dropZoneText = document.getElementById('dropZoneText');
 
-    // 영역 클릭 시 숨겨진 file input 실행
     dropZone.addEventListener('click', () => fileInput.click());
-
-    // 파일이 선택되었을 때 (클릭으로)
-    fileInput.addEventListener('change', function() {
-        updateDropZoneUI(this.files);
-    });
-
-    // 드래그 중일 때 시각 효과
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-
-    // 드래그가 영역을 벗어났을 때
-    dropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-    });
-
-    // 파일을 드롭(놓았을) 때
+    fileInput.addEventListener('change', function() { updateDropZoneUI(this.files); });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
     dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        
+        e.preventDefault(); dropZone.classList.remove('dragover');
         if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files; // input에 파일 덮어쓰기
+            fileInput.files = e.dataTransfer.files; 
             updateDropZoneUI(e.dataTransfer.files);
         }
     });
 
-    // UI 업데이트 함수 (파일명 표시)
     function updateDropZoneUI(files) {
         if (files && files.length > 0) {
             dropZoneText.innerHTML = `✅ 선택된 파일: <b>${files[0].name}</b>`;
@@ -238,14 +390,12 @@
         }
     }
 
-    // 드롭존 초기화 함수
     function resetDropZoneUI() {
         dropZoneText.innerHTML = '📁 이곳으로 파일을 드래그하거나 클릭해서 선택하세요';
         dropZone.classList.remove('has-file');
         fileInput.value = '';
     }
 
-    // 취소 버튼 액션
     function cancelNotice() {
         document.getElementById('noticeTitle').value = '';
         document.getElementById('noticeContent').value = '';
@@ -258,7 +408,6 @@
         toggleForm('resourceForm');
     }
 
-    // 공지 및 자료 등록
     function addItem(type) {
         if (type === 'notice') {
             const title = document.getElementById('noticeTitle').value;
@@ -283,7 +432,7 @@
                 resources.unshift({ name, fileName: file.name, fileData, id: Date.now() });
                 localStorage.setItem('resources', JSON.stringify(resources));
                 
-                cancelResource(); // 파일 선택 UI까지 모두 초기화
+                cancelResource();
                 renderLists();
             };
             reader.readAsDataURL(file);
@@ -308,7 +457,6 @@
     }
 
     function renderLists() {
-        // 공지사항 렌더링
         const noticeList = document.getElementById('noticeList');
         noticeList.innerHTML = notices.map(n => `
             <li class="list-item">
@@ -323,7 +471,6 @@
             </li>
         `).join('');
 
-        // 자료실 렌더링
         const resourceList = document.getElementById('resourceList');
         resourceList.innerHTML = resources.map(r => `
             <li class="list-item" style="display:flex; justify-content:space-between; align-items:center;">
