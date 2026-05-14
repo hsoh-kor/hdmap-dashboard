@@ -254,6 +254,58 @@
         body.dark-mode .btn-sheet,
         body.dark-mode .theme-toggle-btn { color: #ffffff !important; }
 
+
+        /* ==========================================
+           🔐 Firebase 로그인 / 공유 자료 관리 UI
+        ========================================== */
+        .auth-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+        .auth-user {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            opacity: 0.9;
+        }
+        .btn-auth {
+            padding: 7px 12px;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-auth:hover { background: rgba(255,255,255,0.22); }
+        .shared-help-text {
+            font-size: 0.78rem;
+            color: #777;
+            margin: -4px 0 10px 0;
+            line-height: 1.5;
+        }
+        .resource-meta {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 2px;
+        }
+        .empty-list-message {
+            color: #999;
+            font-size: 0.85rem;
+            padding: 16px 0;
+            text-align: center;
+        }
+        body.dark-mode .shared-help-text,
+        body.dark-mode .resource-meta,
+        body.dark-mode .empty-list-message,
+        body.dark-mode .auth-user { color: #cbd5e1 !important; }
+
     </style>
 </head>
 <body>
@@ -265,6 +317,11 @@
     </h1>
     <div style="display: flex; align-items: center; gap: 20px;">
         <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleDarkMode()">🌙 다크모드</button>
+        <div class="auth-area">
+            <span id="authUserInfo" class="auth-user">로그인 필요</span>
+            <button type="button" id="loginBtn" class="btn-auth" onclick="loginWithGoogle()">Google 로그인</button>
+            <button type="button" id="logoutBtn" class="btn-auth" onclick="logoutFirebase()" style="display:none;">로그아웃</button>
+        </div>
         <a href="https://docs.google.com/spreadsheets/d/1quV3cXz-zsKZfZYPrrCi0ZIbHVGWBy5fav4YGuBw9Gg/edit?gid=0#gid=0" 
            target="_blank" 
            class="btn-sheet">
@@ -350,12 +407,11 @@
             <div id="resourceForm" class="input-form">
                 <input type="text" id="resourceName" placeholder="자료 명칭을 입력하세요">
                 
+                <p class="shared-help-text">자료는 Firebase Storage에 직접 업로드되며, 등록 후 모든 사용자가 같은 목록에서 확인할 수 있습니다. 권장 용량은 20MB 이하입니다.</p>
                 <div style="background: #f0f7ff; padding: 12px; border-radius: 6px; border: 1px solid #cce5ff; margin-bottom: 10px;">
-                    <input type="text" id="resourceExternalLink" placeholder="🔗 옵션 1. 대용량 링크 (구글 드라이브 등 URL 입력)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box;">
-                    <div style="text-align:center; font-size:0.75rem; color:#666; margin:8px 0;">또는</div>
                     <div id="dropZone" class="drop-zone" style="margin-bottom:0; padding:15px;">
-                        <span id="dropZoneText">📁 옵션 2. 소용량 파일 드래그 (5MB 이하)</span>
-                        <input type="file" id="resourceFile">
+                        <span id="dropZoneText">📁 파일을 드래그하거나 클릭해서 업로드</span>
+                        <input type="file" id="resourceFile" accept="image/*,.pdf,application/pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.zip,application/zip,application/x-zip-compressed">
                     </div>
                 </div>
 
@@ -553,10 +609,62 @@
 
 
     // ==========================================
-    // 3. 로컬 스토리지 (공지/자료) 관리 로직 (대용량 링크 처리 포함)
+    // 3. Firebase 공용 공지/자료실 관리 로직
+    // - notices: Cloud Firestore
+    // - resources: Firebase Storage + Cloud Firestore
     // ==========================================
-    let notices = JSON.parse(localStorage.getItem('notices')) || [];
-    let resources = JSON.parse(localStorage.getItem('resources')) || [];
+    let notices = [];
+    let resources = [];
+    let currentUser = null;
+    let unsubscribeNotices = null;
+    let unsubscribeResources = null;
+    let pendingResourceFile = null;
+
+    function getFirebaseTools() {
+        if (!window.hdmapFirebase) {
+            alert("Firebase 초기화가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+            return null;
+        }
+        return window.hdmapFirebase;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function formatFirebaseDate(value) {
+        if (!value) return '-';
+        let date;
+        if (typeof value.toDate === 'function') date = value.toDate();
+        else date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '-';
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    }
+
+    function formatFileSize(bytes) {
+        const size = Number(bytes) || 0;
+        if (size < 1024) return size + ' B';
+        if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+        return (size / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function sanitizeFileName(name) {
+        return String(name || 'file')
+            .replace(/[\\/:*?"<>|#%{}^~[\]`]/g, '_')
+            .replace(/\s+/g, '_')
+            .slice(0, 120);
+    }
+
+    function requireLogin() {
+        if (currentUser) return true;
+        alert("등록/삭제는 Google 로그인 후 사용할 수 있습니다.");
+        return false;
+    }
 
     function toggleForm(id) {
         const form = document.getElementById(id);
@@ -566,25 +674,36 @@
     const dz = document.getElementById('dropZone');
     const fi = document.getElementById('resourceFile');
     const dzt = document.getElementById('dropZoneText');
-    const extLink = document.getElementById('resourceExternalLink'); // 🌟 대용량 링크 입력 요소 추가
 
     dz.addEventListener('click', () => fi.click());
-    fi.addEventListener('change', function() { 
-        dzt.innerHTML = `✅ <b>${this.files[0].name}</b>`; 
-        dz.classList.add('has-file'); 
-        extLink.value = ""; 
+    fi.addEventListener('change', function() {
+        setPendingResourceFile(this.files[0]);
     });
     dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
     dz.addEventListener('dragleave', (e) => { e.preventDefault(); dz.classList.remove('dragover'); });
     dz.addEventListener('drop', (e) => {
-        e.preventDefault(); dz.classList.remove('dragover');
+        e.preventDefault();
+        dz.classList.remove('dragover');
         if (e.dataTransfer.files.length > 0) {
-            fi.files = e.dataTransfer.files; 
-            dzt.innerHTML = `✅ <b>${fi.files[0].name}</b>`; 
-            dz.classList.add('has-file'); 
-            extLink.value = "";
+            fi.files = e.dataTransfer.files;
+            setPendingResourceFile(e.dataTransfer.files[0]);
         }
     });
+
+    function setPendingResourceFile(file) {
+        if (!file) return;
+        const maxSize = 20 * 1024 * 1024;
+        if (file.size > maxSize) {
+            fi.value = '';
+            pendingResourceFile = null;
+            dzt.innerHTML = '📁 파일을 드래그하거나 클릭해서 업로드';
+            dz.classList.remove('has-file');
+            return alert("20MB 이하 파일만 업로드할 수 있습니다.");
+        }
+        pendingResourceFile = file;
+        dzt.innerHTML = `✅ <b>${escapeHtml(file.name)}</b> (${formatFileSize(file.size)})`;
+        dz.classList.add('has-file');
+    }
 
     function cancelNotice() {
         document.getElementById('noticeTitle').value = '';
@@ -594,112 +713,211 @@
 
     function cancelResource() {
         document.getElementById('resourceName').value = '';
-        dzt.innerHTML = '📁 옵션 2. 소용량 파일 드래그 (5MB 이하)';
+        pendingResourceFile = null;
+        dzt.innerHTML = '📁 파일을 드래그하거나 클릭해서 업로드';
         dz.classList.remove('has-file');
-        extLink.value = '';
         fi.value = '';
         toggleForm('resourceForm');
     }
 
-    function addItem(type) {
+    async function addItem(type) {
+        if (!requireLogin()) return;
+        const fb = getFirebaseTools();
+        if (!fb) return;
+
         if (type === 'notice') {
-            const title = document.getElementById('noticeTitle').value;
-            const content = document.getElementById('noticeContent').value;
+            const title = document.getElementById('noticeTitle').value.trim();
+            const content = document.getElementById('noticeContent').value.trim();
             if (!title || !content) return alert("제목과 내용을 모두 입력하세요.");
-            
-            const date = new Date().toISOString().split('T')[0];
-            notices.unshift({ title, content, date, id: Date.now() });
-            localStorage.setItem('notices', JSON.stringify(notices));
-            
-            cancelNotice();
-            renderLists();
+
+            try {
+                await fb.addDoc(fb.collection(fb.db, 'notices'), {
+                    title,
+                    content,
+                    createdAt: fb.serverTimestamp(),
+                    createdByUid: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email || '사용자',
+                    createdByEmail: currentUser.email || ''
+                });
+                cancelNotice();
+            } catch (error) {
+                console.error(error);
+                alert("공지사항 등록에 실패했습니다. Firestore 규칙과 로그인 상태를 확인하세요.\n" + error.message);
+            }
         } else {
-            const name = document.getElementById('resourceName').value;
-            const link = extLink.value.trim();
-            const file = fi.files[0];
+            const name = document.getElementById('resourceName').value.trim();
+            const file = pendingResourceFile || fi.files[0];
+            if (!name || !file) return alert("자료 명칭과 업로드할 파일을 모두 선택하세요.");
 
-            if (!name || (!link && !file)) return alert("명칭과 파일(또는 외부 링크)을 모두 확인하세요.");
+            const safeName = sanitizeFileName(file.name);
+            const storagePath = `resources/${Date.now()}_${safeName}`;
 
-            // 🌟 [수정] 링크가 있으면 우선적으로 링크를 저장
-            if (link) {
-                resources.unshift({ name, externalLink: link, id: Date.now() });
-                localStorage.setItem('resources', JSON.stringify(resources));
+            try {
+                const fileRef = fb.ref(fb.storage, storagePath);
+                await fb.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
+                const fileUrl = await fb.getDownloadURL(fileRef);
+
+                await fb.addDoc(fb.collection(fb.db, 'resources'), {
+                    name,
+                    fileName: file.name,
+                    fileUrl,
+                    fileType: file.type || '',
+                    fileSize: file.size,
+                    storagePath,
+                    createdAt: fb.serverTimestamp(),
+                    createdByUid: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email || '사용자',
+                    createdByEmail: currentUser.email || ''
+                });
                 cancelResource();
-                renderLists();
-            } else {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const fileData = e.target.result; 
-                    resources.unshift({ name, fileName: file.name, fileData, id: Date.now() });
-                    localStorage.setItem('resources', JSON.stringify(resources));
-                    cancelResource();
-                    renderLists();
-                };
-                reader.readAsDataURL(file);
+            } catch (error) {
+                console.error(error);
+                alert("자료 업로드에 실패했습니다. Storage 규칙과 파일 형식을 확인하세요.\n" + error.message);
             }
         }
     }
 
-    function deleteItem(type, id) {
-        const adminPassword = "1234"; 
-        const inputPwd = prompt("삭제 권한이 필요합니다. 관리자 비밀번호를 입력하세요:");
-        
-        if (inputPwd === null) return; 
-        if (inputPwd !== adminPassword) {
-            alert("🚨 비밀번호가 일치하지 않아 삭제할 수 없습니다.");
-            return;
-        }
-
+    async function deleteItem(type, id) {
+        if (!requireLogin()) return;
+        const fb = getFirebaseTools();
+        if (!fb) return;
         if (!confirm("정말 이 항목을 삭제하시겠습니까?")) return;
-        
-        if (type === 'notice') {
-            notices = notices.filter(n => n.id !== id);
-            localStorage.setItem('notices', JSON.stringify(notices));
-        } else {
-            resources = resources.filter(r => r.id !== id);
-            localStorage.setItem('resources', JSON.stringify(resources));
+
+        try {
+            if (type === 'notice') {
+                await fb.deleteDoc(fb.doc(fb.db, 'notices', id));
+            } else {
+                const target = resources.find(r => r.id === id);
+                await fb.deleteDoc(fb.doc(fb.db, 'resources', id));
+                if (target && target.storagePath) {
+                    try {
+                        await fb.deleteObject(fb.ref(fb.storage, target.storagePath));
+                    } catch (storageError) {
+                        console.warn("Storage 파일 삭제 실패 또는 이미 삭제됨:", storageError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("삭제에 실패했습니다. 권한 또는 Firebase 규칙을 확인하세요.\n" + error.message);
         }
-        renderLists();
     }
 
     function toggleNotice(id) {
         const contentDiv = document.getElementById('content-' + id);
+        if (!contentDiv) return;
         contentDiv.style.display = (contentDiv.style.display === 'block') ? 'none' : 'block';
     }
 
     function renderLists() {
         const noticeList = document.getElementById('noticeList');
-        noticeList.innerHTML = notices.map(n => `
-            <li class="list-item">
-                <div class="notice-header" onclick="toggleNotice(${n.id})">
-                    <span style="font-weight:bold; color:var(--primary-color)">${n.title}</span>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="color:#999; font-size: 0.8rem;">${n.date}</span>
-                        <button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', ${n.id})">지우기</button>
+        if (notices.length === 0) {
+            noticeList.innerHTML = '<li class="empty-list-message">등록된 공지사항이 없습니다.</li>';
+        } else {
+            noticeList.innerHTML = notices.map(n => `
+                <li class="list-item">
+                    <div class="notice-header" onclick="toggleNotice('${n.id}')">
+                        <span style="font-weight:bold; color:var(--primary-color)">${escapeHtml(n.title)}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:#999; font-size: 0.8rem;">${formatFirebaseDate(n.createdAt)}</span>
+                            <button class="btn-del" onclick="event.stopPropagation(); deleteItem('notice', '${n.id}')">지우기</button>
+                        </div>
                     </div>
-                </div>
-                <div id="content-${n.id}" class="notice-content">${n.content}</div>
-            </li>
-        `).join('');
+                    <div id="content-${n.id}" class="notice-content">${escapeHtml(n.content)}</div>
+                </li>
+            `).join('');
+        }
 
         const resourceList = document.getElementById('resourceList');
-        resourceList.innerHTML = resources.map(r => `
-            <li class="list-item" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="flex:1">
-                    <span style="display:block; font-weight:bold;">${r.name}</span>
-                    ${r.fileName ? `<span style="font-size:0.75rem; color:#888;">파일명: ${r.fileName}</span>` : ''}
-                </div>
-                <div style="display:flex; gap:8px;">
-                    ${r.externalLink 
-                        ? `<a href="${r.externalLink}" target="_blank" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">보기</a>` 
-                        : `<a href="${r.fileData}" download="${r.fileName}" class="btn-mini">다운로드</a>`}
-                    <button class="btn-del" onclick="deleteItem('resource', ${r.id})">지우기</button>
-                </div>
-            </li>
-        `).join('');
+        if (resources.length === 0) {
+            resourceList.innerHTML = '<li class="empty-list-message">등록된 자료가 없습니다.</li>';
+        } else {
+            resourceList.innerHTML = resources.map(r => `
+                <li class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                    <div style="flex:1; min-width:0;">
+                        <span style="display:block; font-weight:bold;">${escapeHtml(r.name)}</span>
+                        <div class="resource-meta">
+                            ${escapeHtml(r.fileName || '파일명 없음')} · ${formatFileSize(r.fileSize)} · ${escapeHtml(r.createdByName || '등록자 미상')} · ${formatFirebaseDate(r.createdAt)}
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-shrink:0;">
+                        <a href="${r.fileUrl}" target="_blank" rel="noopener" class="btn-mini" style="background:#e8f4fd; color:#0288d1; border-color:#0288d1;">보기</a>
+                        <a href="${r.fileUrl}" download="${escapeHtml(r.fileName || '')}" class="btn-mini">다운로드</a>
+                        <button class="btn-del" onclick="deleteItem('resource', '${r.id}')">지우기</button>
+                    </div>
+                </li>
+            `).join('');
+        }
     }
 
-    renderLists();
+    function initFirebaseSharedLists() {
+        const fb = getFirebaseTools();
+        if (!fb) return;
+
+        fb.onAuthStateChanged(fb.auth, (user) => {
+            currentUser = user;
+            const info = document.getElementById('authUserInfo');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (user) {
+                info.textContent = user.displayName || user.email || '로그인됨';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+            } else {
+                info.textContent = '로그인 필요';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+            }
+        });
+
+        if (unsubscribeNotices) unsubscribeNotices();
+        if (unsubscribeResources) unsubscribeResources();
+
+        const noticeQuery = fb.query(fb.collection(fb.db, 'notices'), fb.orderBy('createdAt', 'desc'));
+        unsubscribeNotices = fb.onSnapshot(noticeQuery, (snapshot) => {
+            notices = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            renderLists();
+        }, (error) => {
+            console.error(error);
+            document.getElementById('noticeList').innerHTML = '<li class="empty-list-message" style="color:#e74c3c;">공지사항을 불러오지 못했습니다. Firestore 규칙을 확인하세요.</li>';
+        });
+
+        const resourceQuery = fb.query(fb.collection(fb.db, 'resources'), fb.orderBy('createdAt', 'desc'));
+        unsubscribeResources = fb.onSnapshot(resourceQuery, (snapshot) => {
+            resources = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            renderLists();
+        }, (error) => {
+            console.error(error);
+            document.getElementById('resourceList').innerHTML = '<li class="empty-list-message" style="color:#e74c3c;">자료실을 불러오지 못했습니다. Firestore 규칙을 확인하세요.</li>';
+        });
+    }
+
+    window.loginWithGoogle = async function() {
+        const fb = getFirebaseTools();
+        if (!fb) return;
+        try {
+            const provider = new fb.GoogleAuthProvider();
+            await fb.signInWithPopup(fb.auth, provider);
+        } catch (error) {
+            console.error(error);
+            alert("Google 로그인에 실패했습니다. 승인된 도메인 설정을 확인하세요.\n" + error.message);
+        }
+    };
+
+    window.logoutFirebase = async function() {
+        const fb = getFirebaseTools();
+        if (!fb) return;
+        try {
+            await fb.signOut(fb.auth);
+        } catch (error) {
+            console.error(error);
+            alert("로그아웃에 실패했습니다.\n" + error.message);
+        }
+    };
+
+    window.addEventListener('hdmapFirebaseReady', initFirebaseSharedLists);
+    if (window.hdmapFirebase) initFirebaseSharedLists();
 
 
     // ==========================================
@@ -737,6 +955,74 @@
         }
     })();
 
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { 
+        getAuth, 
+        GoogleAuthProvider, 
+        signInWithPopup, 
+        signOut, 
+        onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        deleteDoc, 
+        doc, 
+        onSnapshot, 
+        query, 
+        orderBy, 
+        serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    import { 
+        getStorage, 
+        ref, 
+        uploadBytes, 
+        getDownloadURL, 
+        deleteObject 
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA7NasoLOvtKJPSLRxspch-bcV3XCFbvYA",
+        authDomain: "jigu-hdmap-dasgboard.firebaseapp.com",
+        projectId: "jigu-hdmap-dasgboard",
+        storageBucket: "jigu-hdmap-dasgboard.firebasestorage.app",
+        messagingSenderId: "202698741566",
+        appId: "1:202698741566:web:ee92fb63cd99fdab90fe6f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    window.hdmapFirebase = {
+        app,
+        auth,
+        db,
+        storage,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signOut,
+        onAuthStateChanged,
+        collection,
+        addDoc,
+        deleteDoc,
+        doc,
+        onSnapshot,
+        query,
+        orderBy,
+        serverTimestamp,
+        ref,
+        uploadBytes,
+        getDownloadURL,
+        deleteObject
+    };
+
+    window.dispatchEvent(new Event('hdmapFirebaseReady'));
 </script>
 
 </body>
